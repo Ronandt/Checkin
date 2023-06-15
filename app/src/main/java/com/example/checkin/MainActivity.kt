@@ -59,6 +59,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.TextButton
 
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -153,51 +154,6 @@ class MainActivity : ComponentActivity() {
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ChangePasswordScreen(navController: NavController) {
-    var oldPassword by remember {mutableStateOf("")}
-    var newPassword by remember {mutableStateOf("")}
-    var confirmNewPassword by remember {mutableStateOf("")}
-    androidx.compose.material.Scaffold(topBar = { TopAppBar(navigationIcon = {
-        IconButton(onClick = {
-            navController.navigateUp()
-        }) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back")
-        }
-
-    }, backgroundColor = greyColour, title = {Text("Change Password", color = Color.White)}, contentColor = Color.White)
-    }) {
-            it -> Box(modifier = Modifier.padding(it)) {
-        Column() {
-            OutlinedTextField(modifier = Modifier.fillMaxWidth(),value = oldPassword, onValueChange = {oldPassword = it}, label = {
-                Text("Old Password")
-            }, visualTransformation = PasswordVisualTransformation())
-            OutlinedTextField(modifier = Modifier.fillMaxWidth(),value = newPassword, onValueChange = {newPassword = it}, label = {
-                Text("New Password")
-            })
-
-            OutlinedTextField(modifier = Modifier.fillMaxWidth(), value = confirmNewPassword, onValueChange = {confirmNewPassword = it}, label = {
-                Text("Confirm New Password")
-            })
-
-
-            Spacer(modifier = Modifier.weight(1f))
-            Button(onClick = {}, colors = ButtonDefaults.buttonColors(containerColor = lightBlueColour), modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .fillMaxWidth()
-                .padding(15.dp), shape = RoundedCornerShape(4.dp)
-            ) {
-                Text("Submit".uppercase())
-            }
-        }
-
-
-    }
-    }
-}
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
@@ -206,126 +162,8 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         modifier = modifier
     )
 }
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun EditProfileScreen(navController: NavController) {
-        androidx.compose.material.Scaffold(topBar = { TopAppBar(navigationIcon = {
-            IconButton(onClick = {
-                navController.navigateUp()
-            }) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back")
-            }
-
-        }, backgroundColor = greyColour, title = {Text("Edit Profile", color = Color.White)}, actions = { IconButton(onClick = { /*TODO*/ }) {
-            Icon(imageVector =Icons.Default.Check, contentDescription = "Save")
-            }}, contentColor = Color.White)
-        }) {
-            it -> Box(modifier = Modifier.padding(it)) {
-                Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(130.dp), elevation = 10.dp) {
-                        Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                            Image(painter = painterResource(id = R.drawable.profile_img), contentDescription = "Profile picture",
-                                Modifier
-                                    .size(100.dp)
-                                    .clip(
-                                        CircleShape
-                                    ))
-                        }
-                    }
-
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(60.dp), elevation = 10.dp, ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(imageVector = Icons.Default.Person, contentDescription = "Username")
-                            Text("Jane Teo")
-                        }
 
 
-                    }
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(60.dp), elevation = 10.dp) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(imageVector = Icons.Default.Email, contentDescription = "Username")
-                            Text("Jane Teo")
-                        }
-
-
-                    }
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(60.dp), elevation = 10.dp) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(painter = painterResource(R.drawable.baseline_business_24), contentDescription = "Username")
-                            Text("Jane Teo")
-                        }
-
-
-                    }
-                }
-        }
-        }
-    }
-@Composable
-fun UpdateProfileScreen(navController: NavController) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        IconButton(onClick = { navController.navigate("editProfile")}) {
-            Icon(Icons.Default.Edit, contentDescription = "Edit profile",Modifier.align(Alignment.End))
-        }
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-            Image(painter = painterResource(id = R.drawable.profile_img), contentDescription = "Profile image", modifier = Modifier
-                .padding(bottom = 100.dp, end = 40.dp, start = 40.dp)
-                .size(100.dp)
-                .clip(
-                    CircleShape
-                ), contentScale = ContentScale.Crop)
-            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                Text("Jane Teo", fontSize = 40.sp, modifier = Modifier.padding())
-                Row(Modifier.fillMaxWidth()) {
-                    Icon(imageVector = Icons.Default.Email, contentDescription = "Email",)
-                    Text(text = "janeteo@gmail.com")
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(120.dp), modifier =  Modifier.fillMaxWidth()) {
-                    Icon(painterResource(R.drawable.baseline_business_24), contentDescription = "Organisation")
-                    Text(text = "NYP")
-                }
-            }
-
-        }
-        Divider()
-        Row(modifier = Modifier.clickable {
-            navController.navigate("changePassword")
-        }.padding(25.dp)) {
-
-            Icon(imageVector = Icons.Outlined.Lock, contentDescription = "Password")
-            Text(text = "Password")
-        }
-        Divider(thickness = 3.dp)
-
-        Row(modifier = Modifier.padding(25.dp)) {
-            Icon(imageVector = Icons.Outlined.ExitToApp, contentDescription = "Logout")
-            Text("Logout")
-        }
-        Divider(thickness= 3.dp)
-
-        Row(modifier =Modifier.padding(15.dp)) {
-            Switch(checked = true, onCheckedChange = {})
-            Text(text = "Biometric login", modifier = Modifier.offset(x = (20.dp), y = 10.dp))
-        }
-
-
-    }
-}
 
 @Composable
 fun NavBar(navState: NavController) {
@@ -364,53 +202,8 @@ fun HomeScreen() {
     fun RecordsScreen() {
 
     }
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun LoginScreen(email: String, password: String, emailCallback: (String) -> Unit, passwordCallback: (String) -> Unit, navigationCallback: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        val error by remember(email) {
-            derivedStateOf {
-                !TextUtils.isEmpty(email) && !Patterns.EMAIL_ADDRESS.matcher(email).matches()
-            }
-        }
-        CheckInVector()
-        OutlinedTextField(value = email, onValueChange = emailCallback, singleLine = true, label = {Text("Email")}, modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 6.dp), supportingText = {if(error) {
 
 
-                Text(text = "This is not an email!", color = Color.Red)
-            } }, colors = TextFieldDefaults.outlinedTextFieldColors(errorBorderColor = Color.Red), isError = error)
-
-
-        OutlinedTextField(value = password, onValueChange = passwordCallback, singleLine = true, visualTransformation = PasswordVisualTransformation(), label= {Text("Password")}, modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 6.dp))
-        
-
-
-        Spacer(modifier = Modifier.weight(1f))
-        TextButton(onClick = {}, modifier = Modifier.align(Alignment.CenterHorizontally), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black)) {
-            Text("Use Biometric", fontWeight = FontWeight.Bold)
-        }
-        Button(onClick = navigationCallback, colors = ButtonDefaults.buttonColors(containerColor = lightBlueColour), modifier = Modifier
-            .align(Alignment.CenterHorizontally)
-            .fillMaxWidth()
-            .padding(15.dp), shape = RoundedCornerShape(4.dp)
-        ) {
-            Text("Submit".uppercase())
-        }
-    }
-}
-@Composable
-fun CheckInVector() {
-    Box(Modifier.background(greyColour)) {
-        Image(painterResource(id = R.drawable.check_in_logo), contentDescription = "Check in logo", contentScale = ContentScale.Crop, modifier = Modifier
-            .height(400.dp)
-            .fillMaxWidth())
-
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
