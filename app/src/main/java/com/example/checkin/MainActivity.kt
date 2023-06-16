@@ -119,7 +119,7 @@ class MainActivity : ComponentActivity() {
 
                                             email = it}, passwordCallback = {password = it}, navigationCallback = {
                                             navControllerState.navigate("home")
-                                        })
+                                        }, navControllerState, this@MainActivity)
                                     }
                                     composable("updateProfile") {
                                         UpdateProfileScreen(navControllerState)
