@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.FileUtils
 import android.text.TextUtils
 import android.util.Patterns
 
@@ -92,6 +93,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.checkin.ui.theme.CheckinTheme
+import com.google.android.gms.common.util.IOUtils
+import java.io.InputStream
 
 class MainActivity : FragmentActivity() {
     private lateinit var logoutCountdownTimer: CountDownTimer
@@ -110,6 +113,7 @@ class MainActivity : FragmentActivity() {
             }
             val navControllerState = rememberNavController()
             println("COMPOSED")
+
 
                 logoutCountdownTimer = object : CountDownTimer(1000000, 1000) {
                     override fun onTick(millisUntilFinished: Long) {

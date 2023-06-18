@@ -32,6 +32,9 @@ interface CheckInAPIService {
 
     suspend fun login(@Body request: UserLoginRequest): Response<ResponseData>
 
+    @POST("/api/wss/changePassword")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ResponseData>
+
 }
 
 @JsonClass(generateAdapter = true)
@@ -49,6 +52,14 @@ data class UserLoginRequest(
     @field:Json(name = "email")var email: String,
     @field:Json(name = "password")var password: String,
     @field:Json(name = "accesskey")var accesskey: String
+)
+
+@JsonClass(generateAdapter = true)
+data class ChangePasswordRequest(
+    @field:Json(name = "accountid") var accountId: String,
+    @field:Json(name = "oldpwd") var oldPassword: String,
+    @field:Json(name = "newpwd") var newPassword: String,
+    @field:Json(name = "cnfmpwd") var confirmPassword: String
 )
 
 @JsonClass(generateAdapter = true)
