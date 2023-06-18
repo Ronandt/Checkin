@@ -1,6 +1,7 @@
 package com.example.checkin
 
 import android.content.Context
+import android.content.Intent
 import android.text.TextUtils
 import android.util.Patterns
 import android.widget.Toast
@@ -22,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -49,6 +51,52 @@ fun LoginScreen(email: String, password: String, emailCallback: (String) -> Unit
     var scope = rememberCoroutineScope()
     var errorAPIErrorMessage by remember {mutableStateOf("")}
     var activated by remember {mutableStateOf(false )}
+    val sharedPref =  context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+    LaunchedEffect(Unit ) {
+        with(sharedPref.edit()) {
+            clear()
+            apply()
+        }
+    }
+    var login: (email: String, password: String) -> Unit = {email, password ->
+        scope.launch(Dispatchers.IO) {
+            try {
+                var result = CheckInService.API.login(UserLoginRequest(email, password, "123"))
+                    .body()
+                if(result?.status == "error") {
+                    errorAPIErrorMessage = result.result.get("message").toString()
+
+                } else if(result?.status == "success") {
+
+                    val sharedPrefStored = context.getSharedPreferences("biometricSafe", Context.MODE_PRIVATE)
+                    with(sharedPrefStored.edit()) {
+                        putString("email", email)
+                        putString("password", password)
+                        apply()
+                    }
+                    with(sharedPref.edit()) {
+                        putString("accountid", result.result.get("accountid").toString())
+                        putString("orgid", result.result.get("orgid").toString())
+                        putString("email", result.result.get("email").toString())
+
+                        apply()
+                    }
+                    withContext(Dispatchers.Main) {
+                        errorAPIErrorMessage = ""
+
+                        navController.navigate("home")
+
+                    }
+
+                } else {
+                    println("this should not happen")
+                }
+            } catch (e: Exception) {
+                errorAPIErrorMessage = "We coould not connect to our server. Please try again"
+            }
+
+        }
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         val error by remember(email) {
             derivedStateOf {
@@ -76,37 +124,45 @@ fun LoginScreen(email: String, password: String, emailCallback: (String) -> Unit
 
 
         Spacer(modifier = Modifier.weight(1f))
-        TextButton(onClick = {}, modifier = Modifier.align(Alignment.CenterHorizontally), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black)) {
-            Text("Use Biometric", fontWeight = FontWeight.Bold)
+
+        if(context.getSharedPreferences("settings", Context.MODE_PRIVATE).getString("biometricsEnabled", "disabled") == "enabled") {
+
+            TextButton(onClick = {
+                val sharedPrefSafe = context.getSharedPreferences("biometricSafe", Context.MODE_PRIVATE)
+                val biometricSharedPref = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                if(!AuthenticationManager.canAuthenticate(context)) {
+                    Toast.makeText(context, "You can't authenticate with biometrics", Toast.LENGTH_SHORT).show()
+                }
+                else if(AuthenticationManager.canAuthenticate(context) && biometricSharedPref.getString("biometricsEnabled", "disabled") == "enabled" && sharedPrefSafe.getString("password", null) != null && sharedPrefSafe.getString("email", null) !=null) {
+                    AuthenticationManager.biometricPrompt(context, {
+                        Toast.makeText(context, "Auth cancelled", Toast.LENGTH_SHORT).show()
+                    }, {
+                        login(
+                            sharedPrefSafe.getString("email", null)!!,
+                            sharedPrefSafe.getString("password", null)!!
+                        )
+                        Toast.makeText(context, "Authentication succeeded", Toast.LENGTH_SHORT).show()
+
+
+                    }, {
+                        Toast.makeText(context, "Authentication failed", Toast.LENGTH_SHORT).show()
+                    }).authenticate(AuthenticationManager.generate())
+                } else {
+                    Toast.makeText(context, "Authentication failed?", Toast.LENGTH_SHORT).show()
+                }
+
+            }, modifier = Modifier.align(Alignment.CenterHorizontally), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black)) {
+                Text("Use Biometric", fontWeight = FontWeight.Bold)
+            }
+
         }
+
         Button(onClick = {
             if(error || email.isEmpty()) {
                 activated = true
                 return@Button
             }
-            scope.launch(Dispatchers.IO) {
-                var result = CheckInService.API.login(UserLoginRequest(email, password, "123"))
-                    .body()
-                if(result?.status == "error") {
-                    errorAPIErrorMessage = result.result.get("message").toString()
-
-                } else if(result?.status == "success") {
-                   val sharedPref =  context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
-                    with(sharedPref.edit()) {
-                        putString("accountid", result.result.get("accountid").toString())
-                        putString("accountid", result.result.get("orgid").toString())
-                        putString("accountid", result.result.get("email").toString())
-                        apply()
-                    }
-                    withContext(Dispatchers.Main) {
-                        navController.navigate("home")
-
-                    }
-
-                } else {
-                    println("this should not happen")
-                }
-            }
+           login(email, password)
                          }, colors = ButtonDefaults.buttonColors(containerColor = lightBlueColour), modifier = Modifier
             .align(Alignment.CenterHorizontally)
             .fillMaxWidth()

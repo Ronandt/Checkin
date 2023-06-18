@@ -1,5 +1,8 @@
 package com.example.checkin
 
+import android.content.Context
+import android.net.Uri
+import android.provider.Settings.Global.putString
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +24,8 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,22 +33,46 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 
 @Composable
-fun UpdateProfileScreen(navController: NavController) {
+fun UpdateProfileScreen(navController: NavController, context: Context) {
+    val biometricSharedPref = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    val imageSharedPref = context.getSharedPreferences("imageInfo", Context.MODE_PRIVATE)
+    val getUserInfo = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+    var enableBiometrics by remember {mutableStateOf(
+        biometricSharedPref.getString("biometricsEnabled", "disabled") == "enabled"
+    )}
     Column(modifier = Modifier.fillMaxWidth()) {
         IconButton(onClick = { navController.navigate("editProfile")}) {
             Icon(Icons.Default.Edit, contentDescription = "Edit profile", Modifier.align(Alignment.End))
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-            Image(painter = painterResource(id = R.drawable.profile_img), contentDescription = "Profile image", modifier = Modifier
-                .padding(bottom = 100.dp, end = 40.dp, start = 40.dp)
-                .size(100.dp)
-                .clip(
-                    CircleShape
-                ), contentScale = ContentScale.Crop)
+            if(!(imageSharedPref.getString(getUserInfo.getString("accountid", null), "")== ""))  {
+                val imageUri =imageSharedPref.getString(getUserInfo.getString("accountid", null), "")
+                println(Uri.decode(imageSharedPref.getString(getUserInfo.getString("accountid", null), "")))
+                AsyncImage(model = imageUri, contentDescription = "Image", contentScale = ContentScale.Crop, modifier = Modifier
+                    .padding(bottom = 100.dp, end = 40.dp, start = 40.dp)
+                    .size(100.dp)
+                    .clip(
+                        CircleShape
+                    )
+                    .clickable { navController.navigate("changeImage") })
+        } else {
+                Image(painter = painterResource(id = R.drawable.profile_img), contentDescription = "Profile image", modifier = Modifier
+                    .padding(bottom = 100.dp, end = 40.dp, start = 40.dp)
+                    .size(100.dp)
+                    .clip(
+                        CircleShape
+                    )
+                    .clickable { navController.navigate("changeImage") }, contentScale = ContentScale.Crop)
+            }
+
+
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text("Jane Teo", fontSize = 40.sp, modifier = Modifier.padding())
                 Row(Modifier.fillMaxWidth()) {
@@ -58,9 +87,11 @@ fun UpdateProfileScreen(navController: NavController) {
 
         }
         Divider()
-        Row(modifier = Modifier.clickable {
-            navController.navigate("changePassword")
-        }.padding(25.dp)) {
+        Row(modifier = Modifier
+            .clickable {
+                navController.navigate("changePassword")
+            }
+            .padding(25.dp)) {
 
             Icon(imageVector = Icons.Outlined.Lock, contentDescription = "Password")
             Text(text = "Password")
@@ -74,7 +105,13 @@ fun UpdateProfileScreen(navController: NavController) {
         Divider(thickness= 3.dp)
 
         Row(modifier = Modifier.padding(15.dp)) {
-            Switch(checked = true, onCheckedChange = {})
+            Switch(checked = enableBiometrics, onCheckedChange = {
+                enableBiometrics = it
+                with(biometricSharedPref.edit()) {
+                    putString("biometricsEnabled", if(enableBiometrics) "enabled" else "disabled")
+                    apply()
+                }
+            })
             Text(text = "Biometric login", modifier = Modifier.offset(x = (20.dp), y = 10.dp))
         }
 
