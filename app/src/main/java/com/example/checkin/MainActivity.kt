@@ -7,6 +7,7 @@ import android.os.CountDownTimer
 import android.os.FileUtils
 import android.text.TextUtils
 import android.util.Patterns
+import android.widget.Toast
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -82,6 +83,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -101,6 +103,9 @@ import com.example.checkin.ui.theme.CheckinTheme
 import com.google.android.gms.common.util.IOUtils
 import kotlinx.coroutines.launch
 import java.io.InputStream
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Date
 
 class MainActivity : FragmentActivity() {
     private lateinit var logoutCountdownTimer: CountDownTimer
@@ -201,9 +206,36 @@ class MainActivity : FragmentActivity() {
                                             floatingActionButtonPosition = FabPosition.Center,
                                             floatingActionButton = {
                                                 FloatingActionButton(onClick = {
-                                                                               scope.launch {
-                                                                                   CheckInService.API.checkIn(CheckInRequest("123", "123 "))
-                                                                               }
+
+                                                   val sharedPref = this@MainActivity.getSharedPreferences("checkInOut", Context.MODE_PRIVATE)
+                                                    if(sharedPref.getString("check", "") in listOf("", "Out") && sharedPref.getString("date", "") !in listOf(
+                                                            LocalDate.now().format(
+                                                            DateTimeFormatter.ofPattern("dd/MM/yyyy")))) {
+                                                        scope.launch {
+                                                            CheckInService.API.checkIn(CheckInRequest("123", "123"))
+
+                                                        }
+
+                                                        with(sharedPref.edit()) {
+                                                            this.putString("check", "In")
+                                                            this.putString(  "date",  LocalDate.now().format(
+                                                                DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                                                            this.apply()
+                                                        }
+                                                    } else if(sharedPref.getString("check", "") == "In") {
+                                                        //checkout
+                                                        scope.launch {
+                                                            CheckInService.API.checkOut(CheckInRequest("123", "123"))
+                                                        }
+                                                        with(sharedPref.edit()) {
+                                                            this.putString("check", "Out")
+                                                            this.apply()
+                                                        }
+                                                    } else {
+                                                        Toast.makeText(this@MainActivity, "You cannot check in as you have already checked out", Toast.LENGTH_SHORT).show()
+                                                    }
+
+
                                                 }, backgroundColor = Color.LightGray) {
                                                     Icon(painterResource(id = R.drawable.baseline_camera_alt_24), contentDescription = "Camera")
 

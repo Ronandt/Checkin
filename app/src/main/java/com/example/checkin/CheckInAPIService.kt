@@ -49,6 +49,9 @@ interface CheckInAPIService {
 
     @POST("/api/checkin")
     suspend fun checkIn(@Body request: CheckInRequest): Response<ResponseData>
+
+    @POST("/api/checkout")
+    suspend fun checkOut(@Body request: CheckInRequest): Response<ResponseData>
 }
 
 @JsonClass(generateAdapter = true)
@@ -62,7 +65,7 @@ data class FailureBody(
 )
 
 @JsonClass(generateAdapter = true)
-data class CheckInRequest(@field:Json(name = "room_id") val roomId:String, @field:Json(name = "accessKey") val accessKey: String)
+data class CheckInRequest(@field:Json(name = "room_id") val roomId:String, @field:Json(name = "accesskey") val accessKey: String)
 @JsonClass(generateAdapter = true)
 data class UserLoginRequest(
     @field:Json(name = "email")var email: String,

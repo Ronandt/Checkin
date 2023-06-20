@@ -29,7 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import okhttp3.ResponseBody
+import okhttp3.internal.toLongOrDefault
 import org.json.JSONObject
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Date
 
 
@@ -82,9 +85,15 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController) {
             Column {
                 Text("Total time clocked in today", modifier = Modifier.padding(bottom = 10.dp, top = 10.dp))
                 Text( "" +
-                        "" + (System.currentTimeMillis().toLong() - (checkSessionInfo?.getJSONObject("result")
-                    ?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")
-                    ?.getJSONObject(0)?.getString("time")?.toLongOrNull() ?: System.currentTimeMillis()))
+                        "" + if(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") == LocalDate.now().format(
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy"))) {checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("time")?.toLongOrDefault(System.currentTimeMillis().toLong())
+                    ?.minus(
+                        (checkSessionInfo?.getJSONObject("result")
+                            ?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")
+                            ?.getJSONObject(0)?.getString("time")?.toLongOrNull() ?: System.currentTimeMillis())
+                    )?.let { TimeConverter.convertUnixToHM(it) }} else {
+                                                                       "Have not checked in yet"
+                }
 , fontSize = 50.sp, modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center
@@ -97,7 +106,8 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController) {
 
 
                 Text(
-                            "" + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date"), fontSize = 50.sp, modifier = Modifier
+                            "" + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("time")?.toLongOrDefault(0)
+                                ?.let { TimeConverter.convertUnixToAMPM(it) }, fontSize = 50.sp, modifier = Modifier
                                 .fillMaxWidth()
                                 .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center
                 )
@@ -107,12 +117,15 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController) {
         Card(modifier = Modifier.fillMaxWidth(0.95f).height(150.dp), elevation = 8.dp) {
             Column {
                 Text("Last checked out: " + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("date"), modifier = Modifier.padding(bottom=10.dp, top = 10.dp))
-                checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("time")
+                checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("time")?.toLongOrDefault(0)
                     ?.let {
-                        Text(
-                            it, fontSize = 50.sp, modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center)
+                        TimeConverter.convertUnixToAMPM(it)
+                            ?.let {
+                                Text(
+                                    it, fontSize = 50.sp, modifier = Modifier
+                                        .fillMaxWidth()
+                                        .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center)
+                            }
                     }
             }
 
