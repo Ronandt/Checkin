@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -46,10 +47,23 @@ fun UpdateProfileScreen(navController: NavController, context: Context) {
     var enableBiometrics by remember {mutableStateOf(
         biometricSharedPref.getString("biometricsEnabled", "disabled") == "enabled"
     )}
+     var userDetails: ResponseData by remember {mutableStateOf(ResponseData("", mapOf("accountid" to "unknown", )))};
+
+    LaunchedEffect(Unit) {
+        try {
+            userDetails = CheckInService.API.getProfileDetails(GetUserInfoRequest(getUserInfo.getString("accountid", "")!!)).body()!!
+            println(userDetails)
+        } catch(e: Exception) {
+            println(e.message)
+            userDetails = ResponseData("", mapOf("accountid" to "unknown", ))
+        }
+
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         IconButton(onClick = { navController.navigate("editProfile")}) {
             Icon(Icons.Default.Edit, contentDescription = "Edit profile", Modifier.align(Alignment.End))
         }
+
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
             if(!(imageSharedPref.getString(getUserInfo.getString("accountid", null), "")== ""))  {
@@ -74,14 +88,14 @@ fun UpdateProfileScreen(navController: NavController, context: Context) {
 
 
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                Text("Jane Teo", fontSize = 40.sp, modifier = Modifier.padding())
+                Text(userDetails.result.get("username").toString(), fontSize = 40.sp, modifier = Modifier.padding())
                 Row(Modifier.fillMaxWidth()) {
                     Icon(imageVector = Icons.Default.Email, contentDescription = "Email",)
-                    Text(text = "janeteo@gmail.com")
+                    Text(text = userDetails.result.get("email").toString())
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(120.dp), modifier =  Modifier.fillMaxWidth()) {
                     Icon(painterResource(R.drawable.baseline_business_24), contentDescription = "Organisation")
-                    Text(text = "NYP")
+                    Text(text = (userDetails.result.get("organisation").toString() ?: "NYP"))
                 }
             }
 

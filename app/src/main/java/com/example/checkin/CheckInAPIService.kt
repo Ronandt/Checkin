@@ -3,13 +3,16 @@ package com.example.checkin
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import okhttp3.ResponseBody
 import org.json.JSONObject
 
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 object CheckInService {
     private val BASE_URL = "http://10.0.2.2:3000"
@@ -35,6 +38,17 @@ interface CheckInAPIService {
     @POST("/api/wss/changePassword")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ResponseData>
 
+    @POST("/api/wss/getProfileDetails")
+    suspend fun getProfileDetails(@Body request: GetUserInfoRequest): Response<ResponseData>
+
+    @POST("/api/wss/updateProfileDetails")
+    suspend fun updateProfileDetails(@Body request: ChangeUserInfoRequest): Response<ResponseData>
+
+    @GET("/api/getCheckedInDetails")
+    suspend fun getCheckedInDetails(@Query("accesskey") accessKey: String): Response<ResponseBody>
+
+    @POST("/api/checkin")
+    suspend fun checkIn(@Body request: CheckInRequest): Response<ResponseData>
 }
 
 @JsonClass(generateAdapter = true)
@@ -48,6 +62,8 @@ data class FailureBody(
 )
 
 @JsonClass(generateAdapter = true)
+data class CheckInRequest(@field:Json(name = "room_id") val roomId:String, @field:Json(name = "accessKey") val accessKey: String)
+@JsonClass(generateAdapter = true)
 data class UserLoginRequest(
     @field:Json(name = "email")var email: String,
     @field:Json(name = "password")var password: String,
@@ -59,7 +75,22 @@ data class ChangePasswordRequest(
     @field:Json(name = "accountid") var accountId: String,
     @field:Json(name = "oldpwd") var oldPassword: String,
     @field:Json(name = "newpwd") var newPassword: String,
-    @field:Json(name = "cnfmpwd") var confirmPassword: String
+    @field:Json(name = "cnfmpwd") var confirmPassword: String,
+    @field:Json(name = "accesskey") var accessKey: String
+)
+
+@JsonClass(generateAdapter = true)
+data class ChangeUserInfoRequest(
+    @field:Json(name = "accountid") var accountId: String,
+    @field:Json(name = "accessKey") var accessKey: String,
+    @field:Json(name = "username") var username: String,
+    @field:Json(name = "email") var email: String,
+    @field:Json(name = "organisation") var organisation: String
+)
+
+@JsonClass(generateAdapter = true)
+data class GetUserInfoRequest(
+    @field:Json(name = "accountid") var accountId: String,
 )
 
 @JsonClass(generateAdapter = true)

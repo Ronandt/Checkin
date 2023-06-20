@@ -58,6 +58,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.ExitToApp
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.Card
+import androidx.compose.material.FabPosition
+import androidx.compose.material.FloatingActionButton
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.TextButton
@@ -72,6 +74,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,8 +83,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -94,6 +99,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.checkin.ui.theme.CheckinTheme
 import com.google.android.gms.common.util.IOUtils
+import kotlinx.coroutines.launch
 import java.io.InputStream
 
 class MainActivity : FragmentActivity() {
@@ -112,6 +118,7 @@ class MainActivity : FragmentActivity() {
                 mutableStateOf("")
             }
             val navControllerState = rememberNavController()
+            val scope = rememberCoroutineScope()
             println("COMPOSED")
 
 
@@ -166,8 +173,16 @@ class MainActivity : FragmentActivity() {
                                         UpdateProfileScreen(navControllerState, context = this@MainActivity)
                                     }
                                     composable("home") {
+                                        androidx.compose.material.Scaffold(floatingActionButton = { FloatingActionButton(
+                                            onClick = { navControllerState.navigate("scanCode") }, backgroundColor = Color.LightGray) {
+                                            Icon(painter = painterResource(R.drawable.baseline_qr_code_scanner_24), contentDescription = "Scan qr code")
+                                        }}, floatingActionButtonPosition =  FabPosition.End) {
+                                            Box(Modifier.padding(it)) {
+                                                HomeScreen(logoutCountdownTimer, navControllerState)
+                                            }
 
-                                        HomeScreen()
+                                        }
+
                                     }
                                     composable("records") {
                                         RecordsScreen()
@@ -180,6 +195,28 @@ class MainActivity : FragmentActivity() {
                                     }
                                     composable("changeImage") {
                                         ChangeImageScreen(navController = navControllerState, this@MainActivity)
+                                    }
+                                    composable("scanCode") {
+                                        androidx.compose.material.Scaffold(
+                                            floatingActionButtonPosition = FabPosition.Center,
+                                            floatingActionButton = {
+                                                FloatingActionButton(onClick = {
+                                                                               scope.launch {
+                                                                                   CheckInService.API.checkIn(CheckInRequest("123", "123 "))
+                                                                               }
+                                                }, backgroundColor = Color.LightGray) {
+                                                    Icon(painterResource(id = R.drawable.baseline_camera_alt_24), contentDescription = "Camera")
+
+                                                }
+                                            }
+
+                                        ) {
+                                            Box(Modifier.padding(it)) {
+                                                ScanCodeScreen()
+                                            }
+
+                                        }
+
                                     }
 
 
@@ -252,55 +289,39 @@ BottomNavigation(backgroundColor = greyColour, modifier = Modifier
 }
 }
 
-@Composable
-fun HomeScreen() {
-    LaunchedEffect(Unit) {
-        logoutCountdownTimer.start()
-
-    }
-
-
-    val sharedPreferences = this.getSharedPreferences("settings", Context.MODE_PRIVATE)
-    val userSharedPreferences = this.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
-    var openDialog by remember {mutableStateOf(sharedPreferences.getString("biometricsEnabled", null) == null && userSharedPreferences.getString("accountid", null) != null)}
-
-    if(openDialog) {
-      AlertDialog(onDismissRequest = { }, buttons= {
-        Row() {
-            Button(onClick = { openDialog = false
-            with(sharedPreferences.edit()) {
-                putString("biometricsEnabled", "enabled")
-                apply()
-            }
-            }) {
-                Text("Enable")
-            }
-            Button(onClick = {openDialog = false
-                with(sharedPreferences.edit()) {
-                    putString("biometricsEnabled", "disabled")
-                    apply()
-                }
-            }) {
-                Text("Disable")
-            }
-        }
-      }, title= {Text("Biometrics")}, text = {Text("Would you like to enable biometrics?")})
-    }
-
-
-}
-
     @Composable
     fun RecordsScreen() {
 
     }
 
+    @Composable
+    fun ScanCodeScreen() {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "Scan Room QR", modifier = Modifier
+                .width(250.dp)
+                .padding(bottom = 50.dp, top = 50.dp), textAlign = TextAlign.Center, fontSize = 40.sp, lineHeight = 40.sp)
+            Row(horizontalArrangement = Arrangement.SpaceAround) {
+                Text(text = "[", fontSize = 250.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.weight(1f))
+                Text(text = "]", fontSize = 250.sp, fontWeight = FontWeight.SemiBold)
+            }
+
+        }
+    }
 
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     CheckinTheme {
-ChangePasswordScreen(navController = rememberNavController())
+        androidx.compose.material.Scaffold(floatingActionButton = { FloatingActionButton(
+            onClick = {  }, backgroundColor = Color.LightGray) {
+            Icon(painter = painterResource(R.drawable.baseline_qr_code_scanner_24), contentDescription = "Scan qr code")
+        }}, floatingActionButtonPosition =  FabPosition.End) {
+            Box(Modifier.padding(it)) {
+               // HomeScreen(logoutCountdownTimer)
+            }
+
+        }
     }
 }}

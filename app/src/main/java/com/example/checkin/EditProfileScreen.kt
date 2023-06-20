@@ -1,5 +1,6 @@
 package com.example.checkin
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
@@ -19,21 +22,52 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EditProfileScreen(navController: NavController) {
-    androidx.compose.material.Scaffold(topBar = { TopAppBar(navigationIcon = {
+    val sharedPrefSession = LocalContext.current.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+    val sharedPrefBiometric = LocalContext.current.getSharedPreferences("biometricSafe", Context.MODE_PRIVATE)
+    var profileDetails by remember { mutableStateOf<ResponseData?>(null)}
+
+    var username by remember {mutableStateOf("")}
+    var email by remember {mutableStateOf("")}
+    var organisation by remember {mutableStateOf("")}
+    val keyboard = LocalSoftwareKeyboardController.current
+    var scope = rememberCoroutineScope()
+    var scaffoldState = rememberScaffoldState()
+    LaunchedEffect(Unit){
+         profileDetails = CheckInService.API.getProfileDetails(GetUserInfoRequest(sharedPrefSession.getString("accountid", "")!!)).body()
+        username = profileDetails?.result?.get("username").toString()
+        email = profileDetails?.result?.get("email").toString()
+        organisation = profileDetails?.result?.get("organisation").toString()
+
+    }
+
+    androidx.compose.material.Scaffold(scaffoldState = scaffoldState, topBar = { TopAppBar(navigationIcon = {
         IconButton(onClick = {
             navController.navigateUp()
         }) {
@@ -42,7 +76,29 @@ fun EditProfileScreen(navController: NavController) {
                 contentDescription = "Back")
         }
 
-    }, backgroundColor = greyColour, title = { Text("Edit Profile", color = Color.White) }, actions = { IconButton(onClick = { /*TODO*/ }) {
+    }, backgroundColor = greyColour, title = { Text("Edit Profile", color = Color.White) }, actions = { IconButton(onClick = {
+        scope.launch(Dispatchers.IO) {
+            try {
+                var result: ResponseData? = CheckInService.API.updateProfileDetails(ChangeUserInfoRequest(username = username, email = email, organisation = organisation, accountId = sharedPrefSession.getString("accountid", "")!!, accessKey = "123")).body()
+                withContext(Dispatchers.Main) {
+                    keyboard?.hide()
+                    scaffoldState.snackbarHostState.showSnackbar(result?.result?.get("message").toString())
+
+                }
+
+                if(result?.status == "success") {
+                    with(sharedPrefBiometric.edit()) {
+                        this.putString("email", email)
+                        apply()
+                    }
+
+                }
+            } catch(e: Exception) {
+                println(e.message)
+            }
+
+        }
+    }) {
         Icon(imageVector = Icons.Default.Check, contentDescription = "Save")
     }
     }, contentColor = Color.White)
@@ -52,7 +108,7 @@ fun EditProfileScreen(navController: NavController) {
             Card(
                 Modifier
                     .fillMaxWidth()
-                    .height(130.dp), elevation = 10.dp) {
+                           .height(130.dp), elevation = 10.dp) {
                 Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     Image(painter = painterResource(id = R.drawable.profile_img), contentDescription = "Profile picture",
                         Modifier
@@ -63,40 +119,24 @@ fun EditProfileScreen(navController: NavController) {
                 }
             }
 
-            Card(
-                Modifier
-                    .fillMaxWidth()
-                    .height(60.dp), elevation = 10.dp, ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Person, contentDescription = "Username")
-                    Text("Jane Teo")
-                }
+            TrailingIconTextField(icon = { Icon(imageVector = Icons.Default.Person, contentDescription = "Username")},
+                label = {Text("Username")}, {username = it}, username)
+            TrailingIconTextField(icon = { Icon(imageVector = Icons.Default.Email, contentDescription = "Username")},
+                label = {Text("Email")}, {email = it}, email)
+            TrailingIconTextField(icon = { Icon(painter = painterResource(R.drawable.baseline_business_24), contentDescription = "Username")},
+                label = {Text("Organisation")}, {organisation = it}, organisation)
 
 
-            }
-            Card(
-                Modifier
-                    .fillMaxWidth()
-                    .height(60.dp), elevation = 10.dp) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Email, contentDescription = "Username")
-                    Text("Jane Teo")
-                }
-
-
-            }
-            Card(
-                Modifier
-                    .fillMaxWidth()
-                    .height(60.dp), elevation = 10.dp) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painter = painterResource(R.drawable.baseline_business_24), contentDescription = "Username")
-                    Text("Jane Teo")
-                }
-
-
-            }
         }
+
     }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TrailingIconTextField(icon: @Composable () -> Unit, label: @Composable () -> Unit, onChangeCallback: (String) -> Unit, state: String) {
+    OutlinedTextField(value = state, onValueChange = onChangeCallback,  leadingIcon = icon, singleLine = true, modifier =   Modifier
+        .fillMaxWidth()
+        )
 }

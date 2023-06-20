@@ -78,6 +78,7 @@ fun LoginScreen(email: String, password: String, emailCallback: (String) -> Unit
                         putString("accountid", result.result.get("accountid").toString())
                         putString("orgid", result.result.get("orgid").toString())
                         putString("email", result.result.get("email").toString())
+                        putString("accesskey", "123")
 
                         apply()
                     }
