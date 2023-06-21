@@ -12,6 +12,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 object CheckInService {
@@ -52,6 +53,14 @@ interface CheckInAPIService {
 
     @POST("/api/checkout")
     suspend fun checkOut(@Body request: CheckInRequest): Response<ResponseData>
+
+    @GET("/api/getRecords/{accessKey}")
+    suspend fun getRecords(@Path(value = "accessKey") accessKey: String): Response<ResponseBody>
+
+    @POST("/api/editEntry")
+    suspend fun editEntry(@Body request: UpdateRequest): Response<ResponseData>
+    @POST("/api/deleteEntry")
+    suspend fun deleteEntry(@Body request: DeleteRequest): Response<ResponseData>
 }
 
 @JsonClass(generateAdapter = true)
@@ -82,6 +91,21 @@ data class ChangePasswordRequest(
     @field:Json(name = "accesskey") var accessKey: String
 )
 
+@JsonClass(generateAdapter = true)
+data class DeleteRequest(
+    @field:Json(name = "entry_id") var entryId: String,
+    @field:Json(name = "accesskey") var accessKey: String
+)
+
+@JsonClass(generateAdapter = true)
+data class UpdateRequest(
+    @field:Json(name = "date") var date: String,
+    @field:Json(name = "accesskey") var accessKey: String,
+    @field:Json(name = "entry_id") var entryId: String,
+    @field:Json(name = "time_in") var timeIn: Long,
+    @field:Json(name = "time_out") var timeOut: Long
+
+)
 @JsonClass(generateAdapter = true)
 data class ChangeUserInfoRequest(
     @field:Json(name = "accountid") var accountId: String,

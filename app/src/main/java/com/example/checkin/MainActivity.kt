@@ -321,10 +321,7 @@ BottomNavigation(backgroundColor = greyColour, modifier = Modifier
 }
 }
 
-    @Composable
-    fun RecordsScreen() {
 
-    }
 
     @Composable
     fun ScanCodeScreen() {
