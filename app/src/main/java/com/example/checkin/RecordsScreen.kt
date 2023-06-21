@@ -1,15 +1,21 @@
 package com.example.checkin
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.ExperimentalMaterialApi
@@ -67,11 +73,65 @@ fun RecordsScreen() {
 
 
     Column() {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Spacer(modifier = Modifier
+                .padding(top = 10.dp)
+                .border(2.dp, Color.Black)
+                .fillMaxWidth(0.95f)
+                .aspectRatio(1.6f)
+                .align(Alignment.Center)
+                .background(color = Color.Transparent))
+            Text("Weekly checkin", modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 20.dp))
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomStart), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
+                Column() {
 
+                    Spacer(modifier = Modifier
+                        .height(90.dp)
+                        .width(20.dp)
+                        .background(Color(0xFFFFA500)) )
+                    Text(text = "Monday", modifier = Modifier.padding(top = 10.dp))
+                }
+
+                Column() {
+                    Spacer(modifier = Modifier
+                        .height(20.dp)
+                        .width(20.dp)
+                        .background(Color(0xFFFFA500)) )
+                }
+                Column() {
+                    Spacer(modifier = Modifier
+                        .height(120.dp)
+                        .width(20.dp)
+                        .background(Color(0xFFFFA500)) )
+            }
+
+                Column() {
+                    Spacer(modifier = Modifier
+                        .height(100.dp)
+                        .width(20.dp)
+                        .background(Color(0xFFFFA500)) )
+                }
+
+                Column() {
+                    Spacer(modifier = Modifier
+                        .background(Color(0xFFFFA500))
+                        .height(50.dp)
+                        .width(20.dp) )
+                }
+
+
+
+            }
+        }
         TextField(value = filter, onValueChange = {filter = it},
             Modifier
                 .fillMaxWidth()
                 .background(Color.White), label={Text("Search")}, colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.White), placeholder = {Text("Enter date")})
+
         LazyColumn(contentPadding = PaddingValues(15.dp)) {
             listOfRecords?.length()?.let {
                 items(it) {
