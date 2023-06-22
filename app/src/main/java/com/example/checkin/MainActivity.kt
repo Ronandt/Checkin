@@ -343,14 +343,6 @@ BottomNavigation(backgroundColor = greyColour, modifier = Modifier
 @Composable
 fun GreetingPreview() {
     CheckinTheme {
-        androidx.compose.material.Scaffold(floatingActionButton = { FloatingActionButton(
-            onClick = {  }, backgroundColor = Color.LightGray) {
-            Icon(painter = painterResource(R.drawable.baseline_qr_code_scanner_24), contentDescription = "Scan qr code")
-        }}, floatingActionButtonPosition =  FabPosition.End) {
-            Box(Modifier.padding(it)) {
-               // HomeScreen(logoutCountdownTimer)
-            }
-
-        }
+        RecordsScreen()
     }
 }}

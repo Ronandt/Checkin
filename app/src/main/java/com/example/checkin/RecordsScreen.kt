@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.rememberSwipeableState
 import androidx.compose.material.swipeable
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,8 +42,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.checkin.CheckInAPIService
 import com.example.checkin.CheckInService
 import kotlinx.coroutines.Dispatchers
@@ -54,11 +57,13 @@ import org.json.JSONObject
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterialApi::class)
+@Preview(showBackground = true)
 @Composable
 fun RecordsScreen() {
     var records by remember {mutableStateOf<JSONObject?>(null)}
     var listOfRecords by remember {mutableStateOf<JSONArray?>(null)}
     var scope = rememberCoroutineScope()
+    var dividerNum by remember {mutableStateOf(5)}
     var filter by remember {mutableStateOf<String>("")}
     LaunchedEffect(Unit) {
         records = CheckInService.API.getRecords("123").body()?.string()
@@ -76,7 +81,7 @@ fun RecordsScreen() {
         Box(modifier = Modifier.fillMaxWidth()) {
             Spacer(modifier = Modifier
                 .padding(top = 10.dp)
-                .border(2.dp, Color.Black)
+                .border(2.dp, Color.LightGray)
                 .fillMaxWidth(0.95f)
                 .aspectRatio(1.6f)
                 .align(Alignment.Center)
@@ -84,43 +89,69 @@ fun RecordsScreen() {
             Text("Weekly checkin", modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 20.dp))
+            for(i in 0 until dividerNum ) {
+                Row(Modifier.offset(y = ( 55 + i * 40).dp, x=12.dp)) {
+                    Text((dividerNum * (dividerNum - (i +1))).toString())
+                    Divider(modifier = Modifier.fillMaxWidth(0.90f), thickness = 2.dp, color = Color.LightGray)
+                }
+
+            }
+
             Row(modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomStart), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
-                Column() {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
                     Spacer(modifier = Modifier
                         .height(90.dp)
                         .width(20.dp)
                         .background(Color(0xFFFFA500)) )
-                    Text(text = "Monday", modifier = Modifier.padding(top = 10.dp))
+                    Text(text = "Monday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
                 }
 
-                Column() {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Spacer(modifier = Modifier
                         .height(20.dp)
                         .width(20.dp)
                         .background(Color(0xFFFFA500)) )
+                    Text(text = "Tuesday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
                 }
-                Column() {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Spacer(modifier = Modifier
                         .height(120.dp)
                         .width(20.dp)
                         .background(Color(0xFFFFA500)) )
+                    Text(text = "Wednesday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
             }
 
-                Column() {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Spacer(modifier = Modifier
                         .height(100.dp)
                         .width(20.dp)
                         .background(Color(0xFFFFA500)) )
+                    Text(text = "Thursday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
                 }
 
-                Column() {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Spacer(modifier = Modifier
                         .background(Color(0xFFFFA500))
                         .height(50.dp)
                         .width(20.dp) )
+                    Text(text = "Friday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Spacer(modifier = Modifier
+                        .background(Color(0xFFFFA500))
+                        .height(50.dp)
+                        .width(20.dp) )
+                    Text(text = "Saturday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Spacer(modifier = Modifier
+                        .background(Color(0xFFFFA500))
+                        .height(50.dp)
+                        .width(20.dp) )
+                    Text(text = "Sunday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
                 }
 
 
