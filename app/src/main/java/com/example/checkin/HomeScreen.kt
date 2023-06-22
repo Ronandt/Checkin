@@ -17,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,7 +32,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import okhttp3.ResponseBody
 import okhttp3.internal.toLongOrDefault
+import org.json.JSONArray
 import org.json.JSONObject
+import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Date
@@ -39,12 +43,36 @@ import java.util.Date
 @Composable
 fun HomeScreen(timer: CountDownTimer, navController: NavController) {
     var checkSessionInfo by remember {mutableStateOf<JSONObject?>(null)}
-    LaunchedEffect(Unit) {
 
-       checkSessionInfo =CheckInService.API.getCheckedInDetails("123").body()?.string()?.let { JSONObject(it) }
+    var data by remember {mutableStateOf<JSONArray?>(null)}
+    var totalTime by remember {mutableStateOf<String?>(null)}
+
+    var weeklyRecordCharts = remember { mutableStateMapOf<String, Int>("Monday" to 0, "Tuesday" to 0, "Wednesday" to 0, "Thursday" to 0, "Friday" to 0, "Saturday" to 0, "Sunday" to 0) }
+    LaunchedEffect(Unit) {
+        checkSessionInfo =CheckInService.API.getCheckedInDetails("123").body()?.string()?.let { JSONObject(it) }
+       data = CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.getJSONArray("data")
+        val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
         var info = checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")
         println(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date"))
         println(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0))
+        var total = 0L
+        for(i in 0 until allRecordsInfo?.length()!!) {
+            weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                .atZone(java.time.ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                .atZone(java.time.ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("EEEE")).toString()]!! + 1
+
+            if(allRecordsInfo.getJSONObject(i).getString("date") ==   LocalDate.now().format(
+                    DateTimeFormatter.ofPattern("dd/MM/yyyy"))) {
+
+               total += (if(allRecordsInfo.getJSONObject(i).getString("time_out") == "0") System.currentTimeMillis() else allRecordsInfo.getJSONObject(i).getString("time_out").toLongOrDefault(0) ) - allRecordsInfo!!.getJSONObject(i).getLong("time_in")
+
+
+            }
+        }
+        println(weeklyRecordCharts.toMap())
+        totalTime = TimeConverter.convertUnixToHM(total)
 
 
         timer.start()
@@ -86,12 +114,9 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController) {
                 Text("Total time clocked in today", modifier = Modifier.padding(bottom = 10.dp, top = 10.dp))
                 Text( "" +
                         "" + if(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") == LocalDate.now().format(
-                        DateTimeFormatter.ofPattern("dd/MM/yyyy"))) {checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("time")?.toLongOrDefault(System.currentTimeMillis().toLong())
-                    ?.minus(
-                        (checkSessionInfo?.getJSONObject("result")
-                            ?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")
-                            ?.getJSONObject(0)?.getString("time")?.toLongOrNull() ?: System.currentTimeMillis())
-                    )?.let { TimeConverter.convertUnixToHM(it) }} else {
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy"))) {
+
+                            totalTime} else {
                                                                        "Have not checked in yet"
                 }
 , fontSize = 50.sp, modifier = Modifier

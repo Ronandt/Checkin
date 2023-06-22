@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -52,8 +53,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
+import okhttp3.internal.toLongOrDefault
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.Instant
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -65,11 +70,22 @@ fun RecordsScreen() {
     var scope = rememberCoroutineScope()
     var dividerNum by remember {mutableStateOf(5)}
     var filter by remember {mutableStateOf<String>("")}
+    var weeklyRecordCharts = remember { mutableStateMapOf<String, Int>("Monday" to 0, "Tuesday" to 0, "Wednesday" to 0, "Thursday" to 0, "Friday" to 0, "Saturday" to 0, "Sunday" to 0) }
     LaunchedEffect(Unit) {
         records = CheckInService.API.getRecords("123").body()?.string()
             ?.let { JSONObject(it).getJSONObject("result") }
         listOfRecords = records?.getJSONArray("data")
+        var data = CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.getJSONArray("data")
+        val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
+        for(i in 0 until allRecordsInfo?.length()!!) {
+            weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                .atZone(java.time.ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                .atZone(java.time.ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("EEEE")).toString()]!! + 1
+            println(weeklyRecordCharts.toMap())
 
+        }
 
         println(records)
 
@@ -91,7 +107,7 @@ fun RecordsScreen() {
                 .padding(top = 20.dp))
             for(i in 0 until dividerNum ) {
                 Row(Modifier.offset(y = ( 55 + i * 40).dp, x=12.dp)) {
-                    Text((dividerNum * (dividerNum - (i +1))).toString())
+                    Text((1 * (dividerNum - (i +1))).toString())
                     Divider(modifier = Modifier.fillMaxWidth(0.90f), thickness = 2.dp, color = Color.LightGray)
                 }
 
@@ -99,60 +115,22 @@ fun RecordsScreen() {
 
             Row(modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.BottomStart), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                .align(Alignment.BottomStart), horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.Bottom) {
 
-                    Spacer(modifier = Modifier
-                        .height(90.dp)
-                        .width(20.dp)
-                        .background(Color(0xFFFFA500)) )
-                    Text(text = "Monday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
-                }
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(modifier = Modifier
-                        .height(20.dp)
-                        .width(20.dp)
-                        .background(Color(0xFFFFA500)) )
-                    Text(text = "Tuesday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(modifier = Modifier
-                        .height(120.dp)
-                        .width(20.dp)
-                        .background(Color(0xFFFFA500)) )
-                    Text(text = "Wednesday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
-            }
+                for((k,v) in weeklyRecordCharts.toMap()) {
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(modifier = Modifier
-                        .height(100.dp)
-                        .width(20.dp)
-                        .background(Color(0xFFFFA500)) )
-                    Text(text = "Thursday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Spacer(modifier = Modifier
+                            .height((v * 30).dp)
+                            .width(20.dp)
+                            .background(Color(0xFFFFA500)) )
+                        Text(text = k, modifier = Modifier.padding(top = 10.dp).offset(y = -5.dp), fontSize = 11.sp)
+                    }
                 }
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(modifier = Modifier
-                        .background(Color(0xFFFFA500))
-                        .height(50.dp)
-                        .width(20.dp) )
-                    Text(text = "Friday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(modifier = Modifier
-                        .background(Color(0xFFFFA500))
-                        .height(50.dp)
-                        .width(20.dp) )
-                    Text(text = "Saturday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(modifier = Modifier
-                        .background(Color(0xFFFFA500))
-                        .height(50.dp)
-                        .width(20.dp) )
-                    Text(text = "Sunday", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp)
-                }
+
+
 
 
 
@@ -222,7 +200,7 @@ fun RecordsScreen() {
                                             )
                                         }
                                         .background(Color.White)
-                                        .padding(top = 10.dp, start = 5.dp)) {
+                                        .padding(top = 10.dp, start = 5.dp).height(40.dp)) {
                                     Text(
                                         listOfRecords!!.getJSONObject(it).getJSONArray("days")
                                             .getJSONObject(x).getString("date").replace("\"", ""),

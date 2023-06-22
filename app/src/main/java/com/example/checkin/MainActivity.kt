@@ -208,9 +208,9 @@ class MainActivity : FragmentActivity() {
                                                 FloatingActionButton(onClick = {
 
                                                    val sharedPref = this@MainActivity.getSharedPreferences("checkInOut", Context.MODE_PRIVATE)
-                                                    if(sharedPref.getString("check", "") in listOf("", "Out") && sharedPref.getString("date", "") !in listOf(
+                                                    if(sharedPref.getString("check", "") in listOf("", "Out") /*&& sharedPref.getString("date", "") !in listOf(
                                                             LocalDate.now().format(
-                                                            DateTimeFormatter.ofPattern("dd/MM/yyyy")))) {
+                                                            DateTimeFormatter.ofPattern("dd/MM/yyyy")))*/) {
                                                         scope.launch {
                                                             CheckInService.API.checkIn(CheckInRequest("123", "123"))
 
