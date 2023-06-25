@@ -71,7 +71,12 @@ fun RecordsScreen() {
     var dividerNum by remember {mutableStateOf(5)}
     var filter by remember {mutableStateOf<String>("")}
     var weeklyRecordCharts = remember { mutableStateMapOf<String, Int>("Monday" to 0, "Tuesday" to 0, "Wednesday" to 0, "Thursday" to 0, "Friday" to 0, "Saturday" to 0, "Sunday" to 0) }
+    var days = remember {listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")}
+    var chartDates = remember {mutableListOf<String>()}
+    var max by remember {mutableStateOf(0)}
     LaunchedEffect(Unit) {
+
+        println(weeklyRecordCharts.toMap())
         records = CheckInService.API.getRecords("123").body()?.string()
             ?.let { JSONObject(it).getJSONObject("result") }
         listOfRecords = records?.getJSONArray("data")
@@ -83,6 +88,8 @@ fun RecordsScreen() {
                 .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
                 .atZone(java.time.ZoneId.systemDefault())
                 .format(DateTimeFormatter.ofPattern("EEEE")).toString()]!! + 1
+            chartDates.add(allRecordsInfo.getJSONObject(i).getString("date"))
+
             println(weeklyRecordCharts.toMap())
 
         }
@@ -107,7 +114,7 @@ fun RecordsScreen() {
                 .padding(top = 20.dp))
             for(i in 0 until dividerNum ) {
                 Row(Modifier.offset(y = ( 55 + i * 40).dp, x=12.dp)) {
-                    Text((1 * (dividerNum - (i +1))).toString())
+                    Text(((max/4f) * (dividerNum - (i +1))).toString())
                     Divider(modifier = Modifier.fillMaxWidth(0.90f), thickness = 2.dp, color = Color.LightGray)
                 }
 
@@ -117,17 +124,21 @@ fun RecordsScreen() {
                 .fillMaxWidth()
                 .align(Alignment.BottomStart), horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.Bottom) {
 
-
-                for((k,v) in weeklyRecordCharts.toMap()) {
-
+                for(i in days) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Spacer(modifier = Modifier
-                            .height((v * 30).dp)
-                            .width(20.dp)
-                            .background(Color(0xFFFFA500)) )
-                        Text(text = k, modifier = Modifier.padding(top = 10.dp).offset(y = -5.dp), fontSize = 11.sp)
+                        if (weeklyRecordCharts[i]!! > max) {
+                            max = weeklyRecordCharts[i]!!
+                        }
+                        weeklyRecordCharts[i]?.times(165/if (max==0) 1 else max)?.let {
+                            Modifier
+                                .height(it.dp)
+                                .width(20.dp)
+                                .background(Color(0xFFFFA500))
+                        }?.let { Spacer(modifier = it) }
+                        Text(text = i, modifier = Modifier.padding(top = 10.dp).offset(y = -5.dp), fontSize = 11.sp)
                     }
                 }
+
 
 
 
@@ -180,7 +191,23 @@ fun RecordsScreen() {
                                             )
                                              withContext(Dispatchers.Main) {
                                                  visible = false
+                                                 if( listOfRecords!!.getJSONObject(it).getJSONArray("days")
+                                                         .getJSONObject(x).getString("date") in chartDates) {
+                                                     weeklyRecordCharts[Instant.ofEpochMilli(listOfRecords!!.getJSONObject(it).getJSONArray("days")
+                                                         .getJSONObject(x).getLong("time_in"))
+                                                         .atZone(java.time.ZoneId.systemDefault())
+                                                         .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(listOfRecords!!.getJSONObject(it).getJSONArray("days")
+                                                         .getJSONObject(x).getLong("time_in"))
+                                                         .atZone(java.time.ZoneId.systemDefault())
+                                                         .format(DateTimeFormatter.ofPattern("EEEE")).toString()]!! - 1
+
+
+                                                 }
                                              }
+
+                                                max = 0
+
+
                                         }
 
                                     }) {
