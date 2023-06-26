@@ -94,6 +94,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.FragmentActivity
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -162,6 +163,7 @@ class MainActivity : FragmentActivity() {
                     
                 ) {
 
+
                         Scaffold(bottomBar = {
                             if(navControllerState.currentBackStackEntryAsState().value?.destination?.route !in listOf("login", "editProfile", "changePassword", "changeImage")) NavBar(navState = navControllerState)
                         }) {
@@ -190,7 +192,7 @@ class MainActivity : FragmentActivity() {
 
                                     }
                                     composable("records") {
-                                        RecordsScreen()
+                                        RecordsScreen(navControllerState)
                                     }
                                     composable("editProfile") {
                                         EditProfileScreen(navController = navControllerState)
@@ -200,6 +202,21 @@ class MainActivity : FragmentActivity() {
                                     }
                                     composable("changeImage") {
                                         ChangeImageScreen(navController = navControllerState, this@MainActivity)
+                                    }
+                                    composable("editRecords/{id}/{date}/{timeIn}/{timeOut}") {
+
+                                        it.arguments!!.getString("date")?.let { it1 ->
+
+                                            it.arguments!!.getString("timeIn")?.let { it2 ->
+
+                                                it.arguments!!.getString("timeOut")?.let { it3 ->
+
+                                                    EditRecordsScreen(it?.arguments?.getString("id")!!,
+                                                        it1, it2, it3, navControllerState
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                     composable("scanCode") {
                                         androidx.compose.material.Scaffold(
@@ -343,6 +360,6 @@ BottomNavigation(backgroundColor = greyColour, modifier = Modifier
 @Composable
 fun GreetingPreview() {
     CheckinTheme {
-        RecordsScreen()
+        RecordsScreen(null!!)
     }
 }}

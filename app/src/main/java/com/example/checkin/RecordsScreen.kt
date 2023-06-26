@@ -1,5 +1,6 @@
 package com.example.checkin
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
@@ -47,6 +48,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.checkin.CheckInAPIService
 import com.example.checkin.CheckInService
 import kotlinx.coroutines.Dispatchers
@@ -56,15 +58,16 @@ import okhttp3.ResponseBody
 import okhttp3.internal.toLongOrDefault
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URLEncoder
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterialApi::class)
-@Preview(showBackground = true)
+//@Preview(showBackground = true)
 @Composable
-fun RecordsScreen() {
+fun RecordsScreen(navController: NavController) {
     var records by remember {mutableStateOf<JSONObject?>(null)}
     var listOfRecords by remember {mutableStateOf<JSONArray?>(null)}
     var scope = rememberCoroutineScope()
@@ -176,7 +179,17 @@ fun RecordsScreen() {
                                     thresholds = { _, _ -> FractionalThreshold(0.3f) }
                                 )) {
                                 Row() {
-                                    IconButton(onClick = { /*TODO*/ }) {
+                                    IconButton(onClick = { navController.navigate("editRecords/${
+                                        listOfRecords!!.getJSONObject(it)
+                                            .getJSONArray("days").getJSONObject(x)
+                                            .getString("entry_id")
+                                    }/${ URLEncoder.encode(listOfRecords!!.getJSONObject(it)
+                                        .getJSONArray("days").getJSONObject(x)
+                                        .getString("date"), "UTF-8")}/${ listOfRecords!!.getJSONObject(it)
+                                        .getJSONArray("days").getJSONObject(x)
+                                        .getString("time_in")}/${ listOfRecords!!.getJSONObject(it)
+                                        .getJSONArray("days").getJSONObject(x)
+                                        .getString("time_out")}") }) {
                                         Icon(Icons.Default.Edit, contentDescription = "Edit")
                                     }
                                     IconButton(onClick = {
