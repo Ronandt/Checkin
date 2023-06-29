@@ -38,12 +38,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 
 @Composable
 fun UpdateProfileScreen(navController: NavController, context: Context) {
     val biometricSharedPref = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
     val imageSharedPref = context.getSharedPreferences("imageInfo", Context.MODE_PRIVATE)
     val getUserInfo = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
+
+
     var enableBiometrics by remember {mutableStateOf(
         biometricSharedPref.getString("biometricsEnabled", "disabled") == "enabled"
     )}

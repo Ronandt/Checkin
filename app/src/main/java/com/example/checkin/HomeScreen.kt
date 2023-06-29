@@ -78,7 +78,7 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
             println(weeklyRecordCharts.toMap())
             totalTime = TimeConverter.convertUnixToHM(total)
 
-            val db = LocalDataSource(context).getDatabase().userDao()
+
             for(i in 0 until data?.length()!!) {
                 var days = data?.getJSONObject(i)?.getJSONArray("days")
 
@@ -87,7 +87,7 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
                     var time_in = days?.getJSONObject(i)?.getString("time_in")
 
                     var date = days?.getJSONObject(i)?.getString("date")
-                    if(!days?.getJSONObject(i)?.getString("entry_id")?.let { db.recordExists(it) }!!) {
+                    /*if(!days?.getJSONObject(i)?.getString("entry_id")?.let { }!!) {
                         if (time_in != null) {
                             if (time_out != null) {
                                 days?.getJSONObject(i)?.getString("entry_id")
@@ -95,7 +95,7 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
                                     ?.let { db.storeAllRecords(it) }
                             }
                         }
-                    }
+                    }*/
 
                 }
 

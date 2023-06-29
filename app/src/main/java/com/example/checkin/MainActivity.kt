@@ -61,6 +61,8 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.Card
 import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.SnackbarDuration
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.TextButton
@@ -77,6 +79,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -110,17 +113,18 @@ import java.util.Date
 
 class MainActivity : FragmentActivity() {
     private lateinit var logoutCountdownTimer: CountDownTimer
+    private var configState by mutableStateOf("Portrait")
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            var email by remember {
+            var email by rememberSaveable {
                 mutableStateOf("")
             }
-            var emailError by remember { mutableStateOf(false)}
-            var password by remember {
+
+            var password by rememberSaveable {
                 mutableStateOf("")
             }
             val navControllerState = rememberNavController()
@@ -219,8 +223,11 @@ class MainActivity : FragmentActivity() {
                                         }
                                     }
                                     composable("scanCode") {
+                                        var state = rememberScaffoldState()
+                                        var scope = rememberCoroutineScope()
                                         androidx.compose.material.Scaffold(
                                             floatingActionButtonPosition = FabPosition.Center,
+                                            scaffoldState = state,
                                             floatingActionButton = {
                                                 FloatingActionButton(onClick = {
 
@@ -239,6 +246,13 @@ class MainActivity : FragmentActivity() {
                                                                 DateTimeFormatter.ofPattern("dd/MM/yyyy")))
                                                             this.apply()
                                                         }
+
+                                                        scope.launch {
+                                                            state.snackbarHostState.showSnackbar("Checked in!", null, SnackbarDuration.Short)
+                                                        }
+
+
+
                                                     } else if(sharedPref.getString("check", "") == "In") {
                                                         //checkout
                                                         scope.launch {
@@ -247,6 +261,10 @@ class MainActivity : FragmentActivity() {
                                                         with(sharedPref.edit()) {
                                                             this.putString("check", "Out")
                                                             this.apply()
+                                                        }
+
+                                                        scope.launch {
+                                                            state.snackbarHostState.showSnackbar("Checked out!", null, SnackbarDuration.Short)
                                                         }
                                                     } else {
                                                         Toast.makeText(this@MainActivity, "You cannot check in as you have already checked out", Toast.LENGTH_SHORT).show()

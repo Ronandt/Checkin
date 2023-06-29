@@ -42,9 +42,11 @@ false
                 onAuthError()
             }
 
+
             override fun onAuthenticationSucceeded(
                 result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
+
                 onAuthSucceeded()
             }
 

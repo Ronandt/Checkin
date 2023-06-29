@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.runtime.setValue
@@ -31,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -51,11 +54,11 @@ import okhttp3.ResponseBody
 fun EditProfileScreen(navController: NavController) {
     val sharedPrefSession = LocalContext.current.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
     val sharedPrefBiometric = LocalContext.current.getSharedPreferences("biometricSafe", Context.MODE_PRIVATE)
-    var profileDetails by remember { mutableStateOf<ResponseData?>(null)}
+    var profileDetails by rememberSaveable { mutableStateOf<ResponseData?>(null)}
 
-    var username by remember {mutableStateOf("")}
-    var email by remember {mutableStateOf("")}
-    var organisation by remember {mutableStateOf("")}
+    var username by rememberSaveable {mutableStateOf("")}
+    var email by rememberSaveable {mutableStateOf("")}
+    var organisation by rememberSaveable {mutableStateOf("")}
     val keyboard = LocalSoftwareKeyboardController.current
     var scope = rememberCoroutineScope()
     var scaffoldState = rememberScaffoldState()
@@ -108,7 +111,7 @@ fun EditProfileScreen(navController: NavController) {
             Card(
                 Modifier
                     .fillMaxWidth()
-                           .height(130.dp), elevation = 10.dp) {
+                    .height(130.dp), elevation = 10.dp) {
                 Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     Image(painter = painterResource(id = R.drawable.profile_img), contentDescription = "Profile picture",
                         Modifier
@@ -118,14 +121,34 @@ fun EditProfileScreen(navController: NavController) {
                             ))
                 }
             }
+            Column(Modifier.verticalScroll(rememberScrollState())) {
 
-            TrailingIconTextField(icon = { Icon(imageVector = Icons.Default.Person, contentDescription = "Username")},
-                label = {Text("Username")}, {username = it}, username)
-            TrailingIconTextField(icon = { Icon(imageVector = Icons.Default.Email, contentDescription = "Username")},
-                label = {Text("Email")}, {email = it}, email)
-            TrailingIconTextField(icon = { Icon(painter = painterResource(R.drawable.baseline_business_24), contentDescription = "Username")},
-                label = {Text("Organisation")}, {organisation = it}, organisation)
 
+                TrailingIconTextField(icon = {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Username"
+                    )
+                },
+                    label = { Text("Username") }, { username = it }, username
+                )
+                TrailingIconTextField(icon = {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = "Username"
+                    )
+                },
+                    label = { Text("Email") }, { email = it }, email
+                )
+                TrailingIconTextField(icon = {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_business_24),
+                        contentDescription = "Username"
+                    )
+                },
+                    label = { Text("Organisation") }, { organisation = it }, organisation
+                )
+            }
 
         }
 
