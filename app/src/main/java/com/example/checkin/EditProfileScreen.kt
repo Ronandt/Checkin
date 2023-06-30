@@ -54,7 +54,7 @@ import okhttp3.ResponseBody
 fun EditProfileScreen(navController: NavController) {
     val sharedPrefSession = LocalContext.current.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
     val sharedPrefBiometric = LocalContext.current.getSharedPreferences("biometricSafe", Context.MODE_PRIVATE)
-    var profileDetails by rememberSaveable { mutableStateOf<ResponseData?>(null)}
+    var profileDetails by remember { mutableStateOf<ResponseData?>(null)}
 
     var username by rememberSaveable {mutableStateOf("")}
     var email by rememberSaveable {mutableStateOf("")}

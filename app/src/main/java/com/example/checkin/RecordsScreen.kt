@@ -1,5 +1,6 @@
 package com.example.checkin
 
+import android.content.Context
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,6 +59,7 @@ import okhttp3.ResponseBody
 import okhttp3.internal.toLongOrDefault
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.net.URLEncoder
 import java.time.Instant
 import java.time.LocalDate
@@ -67,7 +69,7 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterialApi::class)
 //@Preview(showBackground = true)
 @Composable
-fun RecordsScreen(navController: NavController) {
+fun RecordsScreen(navController: NavController, context: Context) {
     var records by remember {mutableStateOf<JSONObject?>(null)}
     var listOfRecords by remember {mutableStateOf<JSONArray?>(null)}
     var scope = rememberCoroutineScope()
@@ -78,24 +80,48 @@ fun RecordsScreen(navController: NavController) {
     var chartDates = remember {mutableListOf<String>()}
     var max by remember {mutableStateOf(0)}
     LaunchedEffect(Unit) {
+        try {
+            records = CheckInService.API.getRecords("123").body()?.string()
+                ?.let { JSONObject(it).getJSONObject("result") }
+            listOfRecords = records?.getJSONArray("data")
+            var data = CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.getJSONArray("data")
+            val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
+            for(i in 0 until allRecordsInfo?.length()!!) {
+                weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("EEEE")).toString()]!! + 1
+                chartDates.add(allRecordsInfo.getJSONObject(i).getString("date"))
 
-        println(weeklyRecordCharts.toMap())
-        records = CheckInService.API.getRecords("123").body()?.string()
-            ?.let { JSONObject(it).getJSONObject("result") }
-        listOfRecords = records?.getJSONArray("data")
-        var data = CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.getJSONArray("data")
-        val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
-        for(i in 0 until allRecordsInfo?.length()!!) {
-            weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
-                .atZone(java.time.ZoneId.systemDefault())
-                .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
-                .atZone(java.time.ZoneId.systemDefault())
-                .format(DateTimeFormatter.ofPattern("EEEE")).toString()]!! + 1
-            chartDates.add(allRecordsInfo.getJSONObject(i).getString("date"))
+                println(weeklyRecordCharts.toMap())
 
-            println(weeklyRecordCharts.toMap())
+            }
+        } catch(e : Exception) {
+            var data = JSONArray(File(context.filesDir, "localRecords").readText().toString())
+           println(data)
+         records  = JSONObject(File(context.filesDir, "a").readText())
+           val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
+            listOfRecords = records?.getJSONArray("data")
+            for(i in 0 until allRecordsInfo?.length()!!) {
+                if(!File(context.filesDir,"delete").readText().contains(allRecordsInfo.getJSONObject(i)
+                    .getString("entry_id"))) {
+                    weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .format(DateTimeFormatter.ofPattern("EEEE")).toString()]!! + 1
+                    chartDates.add(allRecordsInfo.getJSONObject(i).getString("date"))
+                    }
 
+
+
+                println(weeklyRecordCharts.toMap())
+
+            }
         }
+        println(weeklyRecordCharts.toMap())
+
 
         println(records)
 
@@ -168,7 +194,9 @@ fun RecordsScreen(navController: NavController) {
                         if(visible && (filter == "" ||
                                     listOfRecords!!.getJSONObject(it).getJSONArray("days")
                                         .getJSONObject(x).getString("date").replace("\"", "").contains(filter)
-                                    )) {
+                                    ) &&  !File(context.filesDir,"delete").readText().contains(listOfRecords!!.getJSONObject(it)
+                                .getJSONArray("days").getJSONObject(x)
+                                .getString("entry_id"))) {
                             Box(modifier = Modifier
                                 .fillMaxWidth()
                                 .background(Color.LightGray)
@@ -194,14 +222,23 @@ fun RecordsScreen(navController: NavController) {
                                     }
                                     IconButton(onClick = {
                                         scope.launch {
-                                            CheckInService.API.deleteEntry(
-                                                DeleteRequest(
-                                                    listOfRecords!!.getJSONObject(it)
-                                                        .getJSONArray("days").getJSONObject(x)
-                                                        .getString("entry_id"),
-                                                    "123"
+                                            try {
+                                                CheckInService.API.deleteEntry(
+                                                    DeleteRequest(
+                                                        listOfRecords!!.getJSONObject(it)
+                                                            .getJSONArray("days").getJSONObject(x)
+                                                            .getString("entry_id"),
+                                                        "123"
+                                                    )
                                                 )
-                                            )
+                                            } catch(e: Exception) {
+                                                var file = File(context.filesDir, "delete")
+                                                file.appendText(listOfRecords!!.getJSONObject(it)
+                                                    .getJSONArray("days").getJSONObject(x)
+                                                    .getString("entry_id") + " ")
+
+                                            }
+
                                              withContext(Dispatchers.Main) {
                                                  visible = false
                                                  if( listOfRecords!!.getJSONObject(it).getJSONArray("days")

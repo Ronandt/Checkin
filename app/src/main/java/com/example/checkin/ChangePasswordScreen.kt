@@ -65,12 +65,12 @@ fun ChangePasswordScreen(navController: NavController) {
                 Text("Old Password")
             }, visualTransformation = PasswordVisualTransformation())
             OutlinedTextField(modifier = Modifier.fillMaxWidth(),value = newPassword, onValueChange = {newPassword = it}, label = {
-                Text("New Password")
-            })
+                Text("New Password", )
+            }, visualTransformation = PasswordVisualTransformation())
 
             OutlinedTextField(modifier = Modifier.fillMaxWidth(), value = confirmNewPassword, onValueChange = {confirmNewPassword = it}, label = {
                 Text("Confirm New Password")
-            })
+            }, visualTransformation = PasswordVisualTransformation())
 
 
             Spacer(modifier = Modifier.weight(1f))

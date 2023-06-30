@@ -106,8 +106,13 @@ import androidx.navigation.compose.rememberNavController
 import com.example.checkin.ui.theme.CheckinTheme
 import com.google.android.gms.common.util.IOUtils
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.io.File
 import java.io.InputStream
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Date
 
@@ -132,7 +137,7 @@ class MainActivity : FragmentActivity() {
             println("COMPOSED")
 
 
-                logoutCountdownTimer = object : CountDownTimer(1000000, 1000) {
+                logoutCountdownTimer = object : CountDownTimer(60000, 1000) {
                     override fun onTick(millisUntilFinished: Long) {
                         println("Seconds remaining: " + millisUntilFinished/1000)
                     }
@@ -186,6 +191,7 @@ class MainActivity : FragmentActivity() {
                                     composable("home") {
                                         androidx.compose.material.Scaffold(floatingActionButton = { FloatingActionButton(
                                             onClick = { navControllerState.navigate("scanCode") }, backgroundColor = Color.LightGray) {
+
                                             Icon(painter = painterResource(R.drawable.baseline_qr_code_scanner_24), contentDescription = "Scan qr code")
                                         }}, floatingActionButtonPosition =  FabPosition.End) {
                                             Box(Modifier.padding(it)) {
@@ -196,7 +202,7 @@ class MainActivity : FragmentActivity() {
 
                                     }
                                     composable("records") {
-                                        RecordsScreen(navControllerState)
+                                        RecordsScreen(navControllerState, this@MainActivity)
                                     }
                                     composable("editProfile") {
                                         EditProfileScreen(navController = navControllerState)
@@ -236,8 +242,21 @@ class MainActivity : FragmentActivity() {
                                                             LocalDate.now().format(
                                                             DateTimeFormatter.ofPattern("dd/MM/yyyy")))*/) {
                                                         scope.launch {
-                                                            CheckInService.API.checkIn(CheckInRequest("123", "123"))
+                                                            try {
+                                                                CheckInService.API.checkIn(
+                                                                    CheckInRequest("123", "123")
+                                                                )
+                                                            } catch(e: Exception) {
+                                                                var localSession = File(this@MainActivity.filesDir, "checkSessionInfo")
 
+                                                                var resultData = JSONObject(localSession.readText()).getJSONObject("result").getJSONArray("data")
+                                                                val currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                                                val currentZone = ZoneId.systemDefault()
+                                                                val currentUnixTimeMillis = LocalDateTime.now().atZone(currentZone).toInstant().toEpochMilli()
+                                                                var checkedIn = resultData.getJSONObject(0).getJSONArray("last_checked_in").getJSONObject(0)
+                                                                checkedIn.put("date", currentDate)
+                                                                checkedIn.put("time", currentUnixTimeMillis)
+                                                            }
                                                         }
 
                                                         with(sharedPref.edit()) {
@@ -256,12 +275,34 @@ class MainActivity : FragmentActivity() {
                                                     } else if(sharedPref.getString("check", "") == "In") {
                                                         //checkout
                                                         scope.launch {
-                                                            CheckInService.API.checkOut(CheckInRequest("123", "123"))
+                                                            try {
+                                                                CheckInService.API.checkOut(CheckInRequest("123", "123"))
+
+                                                            } catch(e: Exception) {
+
+
+                                                                var localSession = File(this@MainActivity.filesDir, "checkSessionInfo")
+
+                                                               // data = CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.getJSONArray("data")
+                                                                var resultData = JSONObject(localSession.readText()).getJSONObject("result").getJSONArray("data")
+                                                                val currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                                                val currentZone = ZoneId.systemDefault()
+                                                                val currentUnixTimeMillis = LocalDateTime.now().atZone(currentZone).toInstant().toEpochMilli()
+                                                                var checkedIn = resultData.getJSONObject(0).getJSONArray("last_checked_in").getJSONObject(0)
+                                                                var checkedOut = resultData.getJSONObject(1).getJSONArray("last_checked_out").getJSONObject(0)
+                                                                checkedOut.put("date", currentDate)
+                                                                checkedOut.put("time", currentUnixTimeMillis)
+
+
+
+                                                            }
+
                                                         }
                                                         with(sharedPref.edit()) {
                                                             this.putString("check", "Out")
                                                             this.apply()
                                                         }
+
 
                                                         scope.launch {
                                                             state.snackbarHostState.showSnackbar("Checked out!", null, SnackbarDuration.Short)
@@ -378,6 +419,6 @@ BottomNavigation(backgroundColor = greyColour, modifier = Modifier
 @Composable
 fun GreetingPreview() {
     CheckinTheme {
-        RecordsScreen(null!!)
+        //RecordsScreen(null!!)
     }
 }}

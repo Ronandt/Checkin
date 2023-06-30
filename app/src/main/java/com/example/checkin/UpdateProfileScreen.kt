@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Switch
@@ -93,15 +94,20 @@ fun UpdateProfileScreen(navController: NavController, context: Context) {
 
 
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                Text(userDetails.result.get("username").toString(), fontSize = 40.sp, modifier = Modifier.padding())
-                Row(Modifier.fillMaxWidth()) {
-                    Icon(imageVector = Icons.Default.Email, contentDescription = "Email",)
-                    Text(text = userDetails.result.get("email").toString())
+                if(userDetails?.result?.get("username") == null) {
+                    CircularProgressIndicator(Modifier.padding(vertical = 15.dp))
+                } else {
+                    Text(userDetails.result.get("username").toString(), fontSize = 40.sp, modifier = Modifier.padding())
+                    Row(Modifier.fillMaxWidth()) {
+                        Icon(imageVector = Icons.Default.Email, contentDescription = "Email",)
+                        Text(text = userDetails.result.get("email").toString())
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(120.dp), modifier =  Modifier.fillMaxWidth()) {
+                        Icon(painterResource(R.drawable.baseline_business_24), contentDescription = "Organisation")
+                        Text(text = (userDetails.result.get("organisation").toString() ?: "NYP"))
+                    }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(120.dp), modifier =  Modifier.fillMaxWidth()) {
-                    Icon(painterResource(R.drawable.baseline_business_24), contentDescription = "Organisation")
-                    Text(text = (userDetails.result.get("organisation").toString() ?: "NYP"))
-                }
+
             }
 
         }

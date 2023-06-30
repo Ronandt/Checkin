@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Scaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -36,6 +38,7 @@ import okhttp3.ResponseBody
 import okhttp3.internal.toLongOrDefault
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -51,10 +54,74 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
 
     var weeklyRecordCharts = remember { mutableStateMapOf<String, Int>("Monday" to 0, "Tuesday" to 0, "Wednesday" to 0, "Thursday" to 0, "Friday" to 0, "Saturday" to 0, "Sunday" to 0) }
     LaunchedEffect(Unit) {
+        var file = File(context.filesDir, "delete")
+        if(!file.exists()) {
+            file.createNewFile()
+        }
 
         try {
             checkSessionInfo =CheckInService.API.getCheckedInDetails("123").body()?.string()?.let { JSONObject(it) }
             data = CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.getJSONArray("data")
+            val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
+            var info = checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")
+            println(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date"))
+            println(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0))
+
+
+            var localCache = File(context.filesDir, "localRecords")
+            var a = File(context.filesDir, "a")
+            var localSession = File(context.filesDir, "checkSessionInfo")
+
+            localCache.writeText(data.toString())
+            localSession.writeText(checkSessionInfo.toString())
+            CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.toString()
+                ?.let { a.writeText(it) }
+            println(localCache.readText())
+
+            println(weeklyRecordCharts.toMap())
+            var total = 0L
+            for(i in 0 until allRecordsInfo?.length()!!) {
+                weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("EEEE")).toString()]!! + 1
+
+                if(allRecordsInfo.getJSONObject(i).getString("date") ==   LocalDate.now().format(
+                        DateTimeFormatter.ofPattern("dd/MM/yyyy"))) {
+
+                    total += (if(allRecordsInfo.getJSONObject(i).getString("time_out") == "0") System.currentTimeMillis() else allRecordsInfo.getJSONObject(i).getString("time_out").toLongOrDefault(0) ) - allRecordsInfo!!.getJSONObject(i).getLong("time_in")
+
+
+                }
+            }
+            totalTime = TimeConverter.convertUnixToHM(total)
+
+
+            for(i in 0 until data?.length()!!) {
+                var days = data?.getJSONObject(i)?.getJSONArray("days")
+
+                for(x in 0 until (days?.length() ?: 0)) {
+                    var time_out  = days?.getJSONObject(i)?.getString("time_out")
+                    var time_in = days?.getJSONObject(i)?.getString("time_in")
+
+                    var date = days?.getJSONObject(i)?.getString("date")
+                    /*if(days?.getJSONObject(i)?.getString("entry_id") != null) {
+                        if (time_in != null) {
+                            if (time_out != null) {
+                                days?.getJSONObject(i)?.getString("entry_id")
+                                    ?.let { Records(id = it,timeIn = time_in.toLongOrDefault(0L), timeOut = time_out.toLongOrDefault(0),date = date!!, new = false, accessKey = "123") }
+                                    ?.let { db.storeAllRecords(it) }
+                            }
+                        }
+                    }*/
+
+                }
+
+            }
+        } catch(e: Exception) {
+            data = JSONArray(File(context.filesDir, "localRecords").readText())
+            checkSessionInfo = JSONObject(File(context.filesDir, "checkSessionInfo").readText())
             val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
             var info = checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")
             println(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date"))
@@ -75,33 +142,7 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
 
                 }
             }
-            println(weeklyRecordCharts.toMap())
             totalTime = TimeConverter.convertUnixToHM(total)
-
-
-            for(i in 0 until data?.length()!!) {
-                var days = data?.getJSONObject(i)?.getJSONArray("days")
-
-                for(x in 0 until (days?.length() ?: 0)) {
-                    var time_out  = days?.getJSONObject(i)?.getString("time_out")
-                    var time_in = days?.getJSONObject(i)?.getString("time_in")
-
-                    var date = days?.getJSONObject(i)?.getString("date")
-                    /*if(!days?.getJSONObject(i)?.getString("entry_id")?.let { }!!) {
-                        if (time_in != null) {
-                            if (time_out != null) {
-                                days?.getJSONObject(i)?.getString("entry_id")
-                                    ?.let { Records(id = it,timeIn = time_in.toLongOrDefault(0L), timeOut = time_out.toLongOrDefault(0),date = date!!, new = false, accessKey = "123") }
-                                    ?.let { db.storeAllRecords(it) }
-                            }
-                        }
-                    }*/
-
-                }
-
-            }
-        } catch(e: Exception) {
-
         }
 
 
@@ -161,7 +202,7 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
                 }
 , fontSize = 50.sp, modifier = Modifier
                         .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center
+                        .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center, lineHeight = 35.sp
                 )
             }
         }
@@ -169,33 +210,52 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
             .fillMaxWidth(0.95f)
             .height(150.dp),  elevation = 8.dp) {
             Column {
-                Text("Last checked in: "  + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date"), modifier = Modifier.padding(bottom = 10.dp, top = 10.dp))
+                println(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") + "A")
+                println(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") == null)
+                if(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") == null) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).offset(y = 35.dp))
+                } else {
+                    Text("Last checked in: "  + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date"), modifier = Modifier.padding(bottom = 10.dp, top = 10.dp))
+
+                    Text(
+                        "" + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("time")?.toLongOrDefault(0)
+                            ?.let { TimeConverter.convertUnixToAMPM(it) }, fontSize = 50.sp, modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center
+                    )
+                }
 
 
-                Text(
-                            "" + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("time")?.toLongOrDefault(0)
-                                ?.let { TimeConverter.convertUnixToAMPM(it) }, fontSize = 50.sp, modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center
-                )
+
 
             }
         }
         Card(modifier = Modifier
             .fillMaxWidth(0.95f)
             .height(150.dp), elevation = 8.dp) {
+
             Column {
-                Text("Last checked out: " + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("date"), modifier = Modifier.padding(bottom=10.dp, top = 10.dp))
-                checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("time")?.toLongOrDefault(0)
-                    ?.let {
-                        TimeConverter.convertUnixToAMPM(it)
-                            ?.let {
-                                Text(
-                                    it, fontSize = 50.sp, modifier = Modifier
-                                        .fillMaxWidth()
-                                        .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center)
-                            }
-                    }
+                if(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("date") == null) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).offset(y = 35.dp))
+                } else  {
+                    Text("Last checked out: " + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("date"), modifier = Modifier.padding(bottom=10.dp, top = 10.dp))
+                    checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("time")?.toLongOrDefault(0)
+                        ?.let {
+                            TimeConverter.convertUnixToAMPM(it)
+                                ?.let {
+                                    if(it == "null") {
+                                        CircularProgressIndicator()
+                                    } else {
+                                        Text(
+                                            it, fontSize = 50.sp, modifier = Modifier
+                                                .fillMaxWidth()
+                                                .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center)
+                                    }
+
+                                }
+                        }
+                }
+
             }
 
         }
