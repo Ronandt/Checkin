@@ -205,7 +205,7 @@ class MainActivity : FragmentActivity() {
                                         RecordsScreen(navControllerState, this@MainActivity)
                                     }
                                     composable("editProfile") {
-                                        EditProfileScreen(navController = navControllerState)
+                                        EditProfileScreen(navController = navControllerState, this@MainActivity)
                                     }
                                     composable("changePassword") {
                                         ChangePasswordScreen(navController = navControllerState)

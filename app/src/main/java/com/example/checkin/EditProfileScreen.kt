@@ -48,10 +48,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
+import org.json.JSONObject
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun EditProfileScreen(navController: NavController) {
+fun EditProfileScreen(navController: NavController, context: Context) {
     val sharedPrefSession = LocalContext.current.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
     val sharedPrefBiometric = LocalContext.current.getSharedPreferences("biometricSafe", Context.MODE_PRIVATE)
     var profileDetails by remember { mutableStateOf<ResponseData?>(null)}
@@ -60,13 +62,31 @@ fun EditProfileScreen(navController: NavController) {
     var email by rememberSaveable {mutableStateOf("")}
     var organisation by rememberSaveable {mutableStateOf("")}
     val keyboard = LocalSoftwareKeyboardController.current
+
     var scope = rememberCoroutineScope()
     var scaffoldState = rememberScaffoldState()
     LaunchedEffect(Unit){
-         profileDetails = CheckInService.API.getProfileDetails(GetUserInfoRequest(sharedPrefSession.getString("accountid", "")!!)).body()
-        username = profileDetails?.result?.get("username").toString()
-        email = profileDetails?.result?.get("email").toString()
-        organisation = profileDetails?.result?.get("organisation").toString()
+        var file = File(context.filesDir, "updateProfile")
+        try {
+
+            if(!file.exists()) {
+                file.createNewFile()
+            }
+
+            profileDetails = CheckInService.API.getProfileDetails(GetUserInfoRequest(sharedPrefSession.getString("accountid", "")!!)).body()
+
+            username = profileDetails?.result?.get("username").toString()
+            email = profileDetails?.result?.get("email").toString()
+            organisation = profileDetails?.result?.get("organisation").toString()
+            file.writeText( """{"username": "${username}", "email": "${email}", "organisation": "${organisation}"}""")
+        } catch (e: Exception) {
+            val json = JSONObject(file.readText())
+            username = json.getString("username").toString()
+            email = json.getString("email").toString()
+            organisation = json.getString("organisation").toString()
+
+        }
+
 
     }
 
