@@ -99,6 +99,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -375,6 +376,8 @@ BottomNavigation(backgroundColor = greyColour, modifier = Modifier
     .height(70.dp)) {
     BottomNavigationItem(selected = false, unselectedContentColor = Color.White, onClick = { navState.navigate("Home") {
         this.launchSingleTop = true
+        restoreState = true
+
     } }, icon = {
         Icon(Icons.Default.Home, contentDescription = "Home", modifier = Modifier.padding(bottom = 10.dp))
 
@@ -382,6 +385,8 @@ BottomNavigation(backgroundColor = greyColour, modifier = Modifier
     )
     BottomNavigationItem(selected = false, unselectedContentColor = Color.White, onClick = { navState.navigate("records") {
         this.launchSingleTop = true
+        restoreState = true
+
     } }, icon = {
         Icon(Icons.Default.Check, contentDescription = "Records", modifier = Modifier.padding(bottom = 10.dp))
 
@@ -389,6 +394,8 @@ BottomNavigation(backgroundColor = greyColour, modifier = Modifier
     )
     BottomNavigationItem(selected = false, unselectedContentColor = Color.White, onClick = { navState.navigate("updateProfile") {
         this.launchSingleTop = true
+        restoreState = true
+
     } }, icon = {
         Icon(Icons.Default.Person, contentDescription = "Update profile", modifier = Modifier.padding(bottom = 10.dp))
 

@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
@@ -26,9 +27,9 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditRecordsScreen(info: String,date: String, timeIn: String, timeOut: String, navController: NavController) {
-    var checkIn by remember { mutableStateOf(TimeConverter.convertUnixToAMPM(timeIn.toLongOrDefault(0))) }
-    var checkOut by remember {mutableStateOf(TimeConverter.convertUnixToAMPM(timeOut.toLongOrDefault(0)))}
-    var date by remember {mutableStateOf(date)}
+    var checkIn by rememberSaveable { mutableStateOf(TimeConverter.convertUnixToAMPM(timeIn.toLongOrDefault(0))) }
+    var checkOut by rememberSaveable {mutableStateOf(TimeConverter.convertUnixToAMPM(timeOut.toLongOrDefault(0)))}
+    var date by rememberSaveable {mutableStateOf(date)}
     val scope = rememberCoroutineScope()
     var validation = remember(checkIn, checkOut,date) {
         derivedStateOf {

@@ -72,13 +72,29 @@ fun EditProfileScreen(navController: NavController, context: Context) {
             if(!file.exists()) {
                 file.createNewFile()
             }
+      /*       val json = JSONObject(File(context.filesDir, "updateProfile").readText())
+            if(username !=  json.getString("username").toString() || email != json.getString("email").toString() || organisation != json.getString("organisation").toString()) {
+                 CheckInService.API.updateProfileDetails(ChangeUserInfoRequest(username = json.getString("username").toString(), email =  json.getString("email").toString(), organisation = json.getString("organisation").toString(), accountId = sharedPrefSession.getString("accountid", "")!!, accessKey = "123")).body()
+            }*/
 
             profileDetails = CheckInService.API.getProfileDetails(GetUserInfoRequest(sharedPrefSession.getString("accountid", "")!!)).body()
 
             username = profileDetails?.result?.get("username").toString()
             email = profileDetails?.result?.get("email").toString()
             organisation = profileDetails?.result?.get("organisation").toString()
-            file.writeText( """{"username": "${username}", "email": "${email}", "organisation": "${organisation}"}""")
+            val json = JSONObject(file.readText())
+            if(username !=  json.getString("username").toString() || email != json.getString("email").toString() || organisation != json.getString("organisation").toString()) {
+                 CheckInService.API.updateProfileDetails(ChangeUserInfoRequest(username = json.getString("username").toString(), email =  json.getString("email").toString(), organisation = json.getString("organisation").toString(), accountId = sharedPrefSession.getString("accountid", "")!!, accessKey = "123")).body()
+                username = json.getString("username").toString()
+                email = json.getString("email").toString()
+                organisation = json.getString("organisation").toString()
+
+            }
+
+                file.writeText( """{"username": "${username}", "email": "${email}", "organisation": "${organisation}"}""")
+
+
+
         } catch (e: Exception) {
             val json = JSONObject(file.readText())
             username = json.getString("username").toString()
@@ -102,7 +118,14 @@ fun EditProfileScreen(navController: NavController, context: Context) {
     }, backgroundColor = greyColour, title = { Text("Edit Profile", color = Color.White) }, actions = { IconButton(onClick = {
         scope.launch(Dispatchers.IO) {
             try {
+                var file = File(context.filesDir, "updateProfile")
                 var result: ResponseData? = CheckInService.API.updateProfileDetails(ChangeUserInfoRequest(username = username, email = email, organisation = organisation, accountId = sharedPrefSession.getString("accountid", "")!!, accessKey = "123")).body()
+                val json = JSONObject(file.readText())
+
+                json.put("username", username )
+                json.put("email", email)
+                json.put("organisation", organisation)
+                file.writeText(json.toString())
                 withContext(Dispatchers.Main) {
                     keyboard?.hide()
                     scaffoldState.snackbarHostState.showSnackbar(result?.result?.get("message").toString())
@@ -117,6 +140,14 @@ fun EditProfileScreen(navController: NavController, context: Context) {
 
                 }
             } catch(e: Exception) {
+                var file = File(context.filesDir, "updateProfile")
+                val json = JSONObject(file.readText())
+
+                json.put("username", username )
+                json.put("email", email)
+                json.put("organisation", organisation)
+                file.writeText(json.toString())
+                println(json)
                 println(e.message)
             }
 

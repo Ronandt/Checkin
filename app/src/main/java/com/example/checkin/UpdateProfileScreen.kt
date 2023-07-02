@@ -1,5 +1,6 @@
 package com.example.checkin
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.provider.Settings.Global.putString
@@ -36,19 +37,25 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import org.json.JSONObject
+import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 
+@SuppressLint("SuspiciousIndentation")
 @Composable
 fun UpdateProfileScreen(navController: NavController, context: Context) {
     val biometricSharedPref = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
     val imageSharedPref = context.getSharedPreferences("imageInfo", Context.MODE_PRIVATE)
     val getUserInfo = context.getSharedPreferences("userInfo", Context.MODE_PRIVATE)
-
+    var username by rememberSaveable {mutableStateOf("")}
+    var email by rememberSaveable {mutableStateOf("")}
+    var organisation by rememberSaveable {mutableStateOf("")}
 
     var enableBiometrics by remember {mutableStateOf(
         biometricSharedPref.getString("biometricsEnabled", "disabled") == "enabled"
@@ -56,12 +63,38 @@ fun UpdateProfileScreen(navController: NavController, context: Context) {
      var userDetails: ResponseData by remember {mutableStateOf(ResponseData("", mapOf("accountid" to "unknown", )))};
 
     LaunchedEffect(Unit) {
+        val file = File(context.filesDir, "updateProfile")
+
         try {
-            userDetails = CheckInService.API.getProfileDetails(GetUserInfoRequest(getUserInfo.getString("accountid", "")!!)).body()!!
+              userDetails = CheckInService.API.getProfileDetails(GetUserInfoRequest(getUserInfo.getString("accountid", "")!!)).body()!!
+
+                if(!file.exists()) {
+                    file.createNewFile()
+                }
+
+            username = userDetails.result?.get("username").toString()
+            email = userDetails.result?.get("email").toString()
+            organisation = userDetails.result?.get("organisation").toString()
+
+            val json = JSONObject(File(context.filesDir, "updateProfile").readText())
+            if(username !=  json.getString("username").toString() || email != json.getString("email").toString() || organisation != json.getString("organisation").toString()) {
+                CheckInService.API.updateProfileDetails(ChangeUserInfoRequest(username = json.getString("username").toString(), email =  json.getString("email").toString(), organisation = json.getString("organisation").toString(), accountId = getUserInfo.getString("accountid", "")!!, accessKey = "123")).body()
+                username = json.getString("username").toString()
+                email = json.getString("email").toString()
+                organisation = json.getString("organisation").toString()
+
+            }
+                file.writeText( """{"username": "${username}", "email": "${email}", "organisation": "${organisation}"}""")
+
+
+
             println(userDetails)
         } catch(e: Exception) {
             println(e.message)
-            userDetails = ResponseData("", mapOf("accountid" to "unknown", ))
+            val json = JSONObject(file.readText())
+            username = json.getString("username").toString()
+            email = json.getString("email").toString()
+            organisation = json.getString("organisation").toString()
         }
 
     }
@@ -94,17 +127,17 @@ fun UpdateProfileScreen(navController: NavController, context: Context) {
 
 
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                if(userDetails?.result?.get("username") == null) {
+                if(username == null) {
                     CircularProgressIndicator(Modifier.padding(vertical = 15.dp))
                 } else {
-                    Text(userDetails.result.get("username").toString(), fontSize = 40.sp, modifier = Modifier.padding())
+                    Text(username, fontSize = 40.sp, modifier = Modifier.padding())
                     Row(Modifier.fillMaxWidth()) {
                         Icon(imageVector = Icons.Default.Email, contentDescription = "Email",)
-                        Text(text = userDetails.result.get("email").toString())
+                        Text(text = email)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(120.dp), modifier =  Modifier.fillMaxWidth()) {
                         Icon(painterResource(R.drawable.baseline_business_24), contentDescription = "Organisation")
-                        Text(text = (userDetails.result.get("organisation").toString() ?: "NYP"))
+                        Text(text = (organisation ?: "NYP"))
                     }
                 }
 

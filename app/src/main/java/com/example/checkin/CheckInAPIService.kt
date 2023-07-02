@@ -3,6 +3,8 @@ package com.example.checkin
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import okhttp3.OkHttp
+import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import org.json.JSONObject
 
@@ -14,13 +16,16 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import java.util.concurrent.TimeUnit
 
 object CheckInService {
     private val BASE_URL = "http://10.0.2.2:3000"
     val API = checkInAPI()
 
     private fun initialiseRetrofit(): Retrofit{
-        return Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(MoshiConverterFactory.create()).build()
+        return Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(MoshiConverterFactory.create()).client(
+            OkHttpClient().newBuilder().connectTimeout(250, TimeUnit.MILLISECONDS).build()
+        ).build()
     }
 
     private fun checkInAPI(): CheckInAPIService{
