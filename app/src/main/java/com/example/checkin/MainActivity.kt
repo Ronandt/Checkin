@@ -107,6 +107,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.checkin.ui.theme.CheckinTheme
 import com.google.android.gms.common.util.IOUtils
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.InputStream
@@ -250,13 +251,15 @@ class MainActivity : FragmentActivity() {
                                                             } catch(e: Exception) {
                                                                 var localSession = File(this@MainActivity.filesDir, "checkSessionInfo")
 
-                                                                var resultData = JSONObject(localSession.readText()).getJSONObject("result").getJSONArray("data")
+                                                                var data = JSONObject(localSession.readText())
+                                                                var resultData = data.getJSONObject("result").getJSONArray("data")
                                                                 val currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                                                                 val currentZone = ZoneId.systemDefault()
                                                                 val currentUnixTimeMillis = LocalDateTime.now().atZone(currentZone).toInstant().toEpochMilli()
                                                                 var checkedIn = resultData.getJSONObject(0).getJSONArray("last_checked_in").getJSONObject(0)
                                                                 checkedIn.put("date", currentDate)
                                                                 checkedIn.put("time", currentUnixTimeMillis)
+                                                                localSession.writeText(data.toString())
                                                             }
                                                         }
 
@@ -283,9 +286,12 @@ class MainActivity : FragmentActivity() {
 
 
                                                                 var localSession = File(this@MainActivity.filesDir, "checkSessionInfo")
+                                                                //lvar allRecordsUpdate = File(this@MainActivity.filesDir, "unsyncedRecordsInfo")
 
                                                                // data = CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.getJSONArray("data")
-                                                                var resultData = JSONObject(localSession.readText()).getJSONObject("result").getJSONArray("data")
+                                                                var data = JSONObject(localSession.readText())
+
+                                                                var resultData = data.getJSONObject("result").getJSONArray("data")
                                                                 val currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                                                                 val currentZone = ZoneId.systemDefault()
                                                                 val currentUnixTimeMillis = LocalDateTime.now().atZone(currentZone).toInstant().toEpochMilli()
@@ -293,7 +299,15 @@ class MainActivity : FragmentActivity() {
                                                                 var checkedOut = resultData.getJSONObject(1).getJSONArray("last_checked_out").getJSONObject(0)
                                                                 checkedOut.put("date", currentDate)
                                                                 checkedOut.put("time", currentUnixTimeMillis)
+                                                                localSession.writeText(data.toString())
 
+
+
+                                                                var d= JSONArray(File(this@MainActivity.filesDir, "localRecords").readText().toString())
+                                                                println(d)
+                                                                var records  = JSONObject(File(this@MainActivity.filesDir, "a").readText())
+                                                                val allRecordsInfo: JSONArray? = d.getJSONObject(d.length()?.minus(1) ?: 0)?.getJSONArray("days")
+                                                                var listOfRecords = records?.getJSONArray("data")
 
 
                                                             }
