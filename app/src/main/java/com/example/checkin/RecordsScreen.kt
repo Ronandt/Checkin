@@ -1,7 +1,6 @@
 package com.example.checkin
 
 import android.content.Context
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
@@ -16,16 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FractionalThreshold
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -36,33 +32,27 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.checkin.CheckInAPIService
-import com.example.checkin.CheckInService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.ResponseBody
-import okhttp3.internal.toLongOrDefault
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.net.URLEncoder
 import java.time.Instant
-import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
@@ -85,8 +75,26 @@ fun RecordsScreen(navController: NavController, context: Context) {
                 ?.let { JSONObject(it).getJSONObject("result") }
             listOfRecords = records?.getJSONArray("data")
             var data = CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.getJSONArray("data")
+
             val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
+            var new = File(context.filesDir, "updatedRecord")
+            if(!new.exists()) {
+                new.writeText(JSONArray().toString())
+            }
+            var jsonAr = JSONArray(new)
+            for(i in 0 until jsonAr.length() -1) {
+                var o = jsonAr.getJSONObject(i)
+                    var b = listOfRecords?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
+                b?.put(o)
+                weeklyRecordCharts[Instant.ofEpochMilli(o.getLong("time_in"))
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(o.getLong("time_in"))
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("EEEE")).toString()]!! + 1
+                chartDates.add(o.getString("date"))
+            }
             for(i in 0 until allRecordsInfo?.length()!!) {
+
                 weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
                     .atZone(java.time.ZoneId.systemDefault())
                     .format(DateTimeFormatter.ofPattern("EEEE")).toString()] = weeklyRecordCharts[Instant.ofEpochMilli(allRecordsInfo.getJSONObject(i).getLong("time_in"))
@@ -97,11 +105,17 @@ fun RecordsScreen(navController: NavController, context: Context) {
                 println(weeklyRecordCharts.toMap())
 
             }
+
         } catch(e : Exception) {
             var data = JSONArray(File(context.filesDir, "localRecords").readText().toString())
+
            println(data)
          records  = JSONObject(File(context.filesDir, "a").readText())
+            var recordsInfos = records!!.getJSONArray("data").getJSONObject(data?.length()?.minus(1) ?: 0)
+
            val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
+            recordsInfos.put("days", allRecordsInfo)
+
             listOfRecords = records?.getJSONArray("data")
             for(i in 0 until allRecordsInfo?.length()!!) {
                 if(!File(context.filesDir,"delete").readText().contains(allRecordsInfo.getJSONObject(i)
@@ -164,7 +178,9 @@ fun RecordsScreen(navController: NavController, context: Context) {
                                 .width(20.dp)
                                 .background(Color(0xFFFFA500))
                         }?.let { Spacer(modifier = it) }
-                        Text(text = i, modifier = Modifier.padding(top = 10.dp).offset(y = -5.dp), fontSize = 11.sp)
+                        Text(text = i, modifier = Modifier
+                            .padding(top = 10.dp)
+                            .offset(y = -5.dp), fontSize = 11.sp)
                     }
                 }
 
@@ -277,7 +293,8 @@ fun RecordsScreen(navController: NavController, context: Context) {
                                             )
                                         }
                                         .background(Color.White)
-                                        .padding(top = 10.dp, start = 5.dp).height(40.dp)) {
+                                        .padding(top = 10.dp, start = 5.dp)
+                                        .height(40.dp)) {
                                     Text(
                                         listOfRecords!!.getJSONObject(it).getJSONArray("days")
                                             .getJSONObject(x).getString("date").replace("\"", ""),

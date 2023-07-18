@@ -149,15 +149,22 @@ fun UpdateProfileScreen(navController: NavController, context: Context) {
             .clickable {
                 navController.navigate("changePassword")
             }
-            .padding(25.dp)) {
+            .padding(25.dp).fillMaxWidth()) {
 
             Icon(imageVector = Icons.Outlined.Lock, contentDescription = "Password")
             Text(text = "Password")
         }
         Divider(thickness = 3.dp)
 
-        Row(modifier = Modifier.padding(25.dp)) {
+        Row(modifier = Modifier.clickable{  var sharedpref = context.getSharedPreferences("", Context.MODE_PRIVATE)
+        with(sharedpref.edit()) {
+            clear()
+            apply()
+        }
+            navController.navigate("login")
+        }.padding(25.dp).fillMaxWidth()) {
             Icon(imageVector = Icons.Outlined.ExitToApp, contentDescription = "Logout")
+
             Text("Logout")
         }
         Divider(thickness= 3.dp)

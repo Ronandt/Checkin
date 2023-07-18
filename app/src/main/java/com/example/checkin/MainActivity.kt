@@ -10,7 +10,9 @@ import android.util.Patterns
 import android.widget.Toast
 
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -117,6 +119,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Date
+import java.util.UUID
 
 class MainActivity : FragmentActivity() {
     private lateinit var logoutCountdownTimer: CountDownTimer
@@ -137,6 +140,15 @@ class MainActivity : FragmentActivity() {
             val navControllerState = rememberNavController()
             val scope = rememberCoroutineScope()
             println("COMPOSED")
+            val cp = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+
+            }
+            LaunchedEffect(key1 = Unit ) {
+
+                cp.launch(android.Manifest.permission.CAMERA)
+                cp.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+
 
 
                 logoutCountdownTimer = object : CountDownTimer(60000, 1000) {
@@ -241,6 +253,7 @@ class MainActivity : FragmentActivity() {
 
                                                    val sharedPref = this@MainActivity.getSharedPreferences("checkInOut", Context.MODE_PRIVATE)
                                                     if(sharedPref.getString("check", "") in listOf("", "Out") /*&& sharedPref.getString("date", "") !in listOf(
+                                                      records  = JSONObject(File(context.filesDir, "a").readText())
                                                             LocalDate.now().format(
                                                             DateTimeFormatter.ofPattern("dd/MM/yyyy")))*/) {
                                                         scope.launch {
@@ -249,7 +262,15 @@ class MainActivity : FragmentActivity() {
                                                                     CheckInRequest("123", "123")
                                                                 )
                                                             } catch(e: Exception) {
+                                                                var records  = JSONObject(File(this@MainActivity.filesDir, "a").readText())
                                                                 var localSession = File(this@MainActivity.filesDir, "checkSessionInfo")
+                                                                var d= JSONArray(File(this@MainActivity.filesDir, "localRecords").readText().toString())
+                                                                println(d)
+                                                                val allRecordsInfo: JSONArray? = d.getJSONObject(d.length()?.minus(1) ?: 0)?.getJSONArray("days")
+
+
+
+
 
                                                                 var data = JSONObject(localSession.readText())
                                                                 var resultData = data.getJSONObject("result").getJSONArray("data")
@@ -257,9 +278,32 @@ class MainActivity : FragmentActivity() {
                                                                 val currentZone = ZoneId.systemDefault()
                                                                 val currentUnixTimeMillis = LocalDateTime.now().atZone(currentZone).toInstant().toEpochMilli()
                                                                 var checkedIn = resultData.getJSONObject(0).getJSONArray("last_checked_in").getJSONObject(0)
+                                                                var new = File(this@MainActivity.filesDir, "updatedRecord")
+
+
                                                                 checkedIn.put("date", currentDate)
                                                                 checkedIn.put("time", currentUnixTimeMillis)
+                                                                var jsonObject = JSONObject()
+                                                                jsonObject.put("time_in", currentUnixTimeMillis)
+                                                                jsonObject.put("time_out", 0L)
+                                                                jsonObject.put("date", currentDate)
+                                                                jsonObject.put("new", true)
+                                                                jsonObject.put("entry_id", UUID.randomUUID())
+                                                                allRecordsInfo?.put(jsonObject)
+
+                                                                if(!new.exists()) {
+                                                                    new.writeText(JSONArray().toString())
+                                                                }
+
+                                                                var newJsonObjects = JSONArray(new.readText())
+                                                                newJsonObjects.put(jsonObject)
+                                                                new.writeText(newJsonObjects.toString())
+
+
+
+                                                                File(this@MainActivity.filesDir, "localRecords").writeText(d.toString())
                                                                 localSession.writeText(data.toString())
+                                                                println(localSession)
                                                             }
                                                         }
 
@@ -283,31 +327,58 @@ class MainActivity : FragmentActivity() {
                                                                 CheckInService.API.checkOut(CheckInRequest("123", "123"))
 
                                                             } catch(e: Exception) {
-
+                                                                println("OIWTF")
 
                                                                 var localSession = File(this@MainActivity.filesDir, "checkSessionInfo")
-                                                                //lvar allRecordsUpdate = File(this@MainActivity.filesDir, "unsyncedRecordsInfo")
+                                                                //var allRecordsUpdate = File(this@MainActivity.filesDir, "unusedRecordsInfo")
+                                                             //   var allRecordsData = JSONArray(allRecordsUpdate.readText())
+
+
+                                                                // Retrieve the "days" array from the JSON object
+
+                                                                // Retrieve the "days" array from the JSON object
+
+// Get the last object in the "days" array
+                                                                val currentZone = ZoneId.systemDefault()
+                                                                val currentUnixTimeMillis = LocalDateTime.now().atZone(currentZone).toInstant().toEpochMilli()
+// Get the last object in the "days" array
+
 
                                                                // data = CheckInService.API.getRecords("123").body()?.string()?.let {JSONObject(it)}?.getJSONObject("result")?.getJSONArray("data")
                                                                 var data = JSONObject(localSession.readText())
 
                                                                 var resultData = data.getJSONObject("result").getJSONArray("data")
                                                                 val currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                                                                val currentZone = ZoneId.systemDefault()
-                                                                val currentUnixTimeMillis = LocalDateTime.now().atZone(currentZone).toInstant().toEpochMilli()
+
                                                                 var checkedIn = resultData.getJSONObject(0).getJSONArray("last_checked_in").getJSONObject(0)
                                                                 var checkedOut = resultData.getJSONObject(1).getJSONArray("last_checked_out").getJSONObject(0)
                                                                 checkedOut.put("date", currentDate)
                                                                 checkedOut.put("time", currentUnixTimeMillis)
                                                                 localSession.writeText(data.toString())
 
-
-
+                                                                var new = File(this@MainActivity.filesDir, "updatedRecord")
+                                                                var newJSON = JSONArray(new.readText())
                                                                 var d= JSONArray(File(this@MainActivity.filesDir, "localRecords").readText().toString())
                                                                 println(d)
                                                                 var records  = JSONObject(File(this@MainActivity.filesDir, "a").readText())
                                                                 val allRecordsInfo: JSONArray? = d.getJSONObject(d.length()?.minus(1) ?: 0)?.getJSONArray("days")
                                                                 var listOfRecords = records?.getJSONArray("data")
+                                                                val lastObject = allRecordsInfo?.getJSONObject(
+                                                                    allRecordsInfo?.length()?.minus(1) ?: 0
+                                                                )
+                                                                if(newJSON.length() != 0) {
+                                                                    var jsonOb = newJSON.getJSONObject(newJSON.length() -1)
+                                                                    jsonOb.put("time_out", currentUnixTimeMillis)
+                                                                    new.writeText(newJSON.toString())
+                                                                }
+
+
+// Add the "time_out" property to the last object
+
+// Add the "time_out" property to the last object
+                                                                lastObject?.put("time_out", currentUnixTimeMillis)
+
+                                                                File(this@MainActivity.filesDir, "localRecords").writeText(d.toString())
 
 
                                                             }

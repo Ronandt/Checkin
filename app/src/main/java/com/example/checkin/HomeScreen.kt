@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.CountDownTimer
 import java.util.UUID
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -120,6 +121,7 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
 
             }
         } catch(e: Exception) {
+
             data = JSONArray(File(context.filesDir, "localRecords").readText())
             checkSessionInfo = JSONObject(File(context.filesDir, "checkSessionInfo").readText())
             val allRecordsInfo: JSONArray? = data?.getJSONObject(data?.length()?.minus(1) ?: 0)?.getJSONArray("days")
@@ -188,22 +190,33 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
     
     
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement =  Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        BoxWithConstraints() {
+            if(this.maxWidth > this.maxHeight) {
+
+            }
+
+        }
         Card(modifier = Modifier
             .fillMaxWidth(0.95f)
             .height(150.dp),  elevation = 8.dp) {
             Column {
                 Text("Total time clocked in today", modifier = Modifier.padding(bottom = 10.dp, top = 10.dp))
-                Text( "" +
-                        "" + if(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") == LocalDate.now().format(
-                        DateTimeFormatter.ofPattern("dd/MM/yyyy"))) {
+                if(totalTime == null) {
+                    CircularProgressIndicator()
+                } else {
+                    Text( "" +
+                            "" + if(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") == LocalDate.now().format(
+                            DateTimeFormatter.ofPattern("dd/MM/yyyy"))) {
 
-                            totalTime} else {
-                                                                       "Have not checked in yet"
+                        totalTime} else {
+                        "Have not checked in yet"
+                    }
+                        , fontSize = 50.sp, modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center, lineHeight = 35.sp
+                    )
                 }
-, fontSize = 50.sp, modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally), fontWeight = FontWeight.Light, textAlign = TextAlign.Center, lineHeight = 35.sp
-                )
+
             }
         }
         Card(modifier = Modifier
@@ -213,7 +226,9 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
                 println(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") + "A")
                 println(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") == null)
                 if(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date") == null) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).offset(y = 35.dp))
+                    CircularProgressIndicator(modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .offset(y = 35.dp))
                 } else {
                     Text("Last checked in: "  + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(0)?.getJSONArray("last_checked_in")?.getJSONObject(0)?.getString("date"), modifier = Modifier.padding(bottom = 10.dp, top = 10.dp))
 
@@ -236,7 +251,9 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
 
             Column {
                 if(checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("date") == null) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).offset(y = 35.dp))
+                    CircularProgressIndicator(modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .offset(y = 35.dp))
                 } else  {
                     Text("Last checked out: " + checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("date"), modifier = Modifier.padding(bottom=10.dp, top = 10.dp))
                     checkSessionInfo?.getJSONObject("result")?.getJSONArray("data")?.getJSONObject(1)?.getJSONArray("last_checked_out")?.getJSONObject(0)?.getString("time")?.toLongOrDefault(0)
@@ -260,7 +277,7 @@ fun HomeScreen(timer: CountDownTimer, navController: NavController, context: Con
 
         }
     }
-    
+
 
 
 }

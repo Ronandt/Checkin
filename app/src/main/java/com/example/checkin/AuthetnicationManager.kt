@@ -18,7 +18,7 @@ object AuthenticationManager {
 
     fun canAuthenticate(context: Context): Boolean {
         val biometricManager = BiometricManager.from(context)
-        return when(biometricManager.canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)) {
+        return when(biometricManager.canAuthenticate(BIOMETRIC_STRONG)) {
             BiometricManager.BIOMETRIC_SUCCESS ->
                  true
             BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE ->
